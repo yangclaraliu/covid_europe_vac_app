@@ -1,0 +1,13 @@
+name: covid_europe_vaccine
+title: covid_europe_vaccine
+username:
+account: yangcliu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3457110
+bundleId: 4083074
+url: https://yangcliu.shinyapps.io/covid_europe_vaccine/
+when: 1610388768.38699
+lastSyncTime: 1610388768.38699
+asMultiple: FALSE
+asStatic: FALSE
