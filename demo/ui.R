@@ -1,8 +1,6 @@
 ui <- fluidPage(
   titlePanel("Covid Vax"),
   
-  actionButton("update", "Run with Current Parameters"),
-  
   fluidRow(
     column(4,
            selectInput(
@@ -66,6 +64,8 @@ ui <- fluidPage(
   ),
   
   hr(),
+  
+  actionButton("update", "Run with Current Parameters"),
   
   tabsetPanel(
     type = "tabs",
