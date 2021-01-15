@@ -161,37 +161,6 @@ server <- function(input, output, session) {
            color = "Strategy",
            title = "Age Specific Vaccination Progress") +
       ggsci::scale_color_lancet()
-    # dataInput()[["daily_vac"]] %>% 
-    #   mutate(date =   dataInput()[["supply"]]$milestone_date[1] + as.numeric(t)) %>% 
-    #   dplyr::select(-t, -supply) %>%
-    #   mutate_at(vars(starts_with("Y")), cumsum) %>% 
-    #   pivot_longer(cols = starts_with("Y")) %>% 
-    #   # filter(value > 0) %>% 
-    #   left_join(data.frame(name = paste0("Y",1:16),
-    #                        pop = dataInput()[["size"]]),# params$param$pop[[1]]$size),
-    #             by = "name") %>% 
-    #   mutate(p = value/pop,
-    #          name = factor(name,
-    #                        levels = paste0("Y",1:16),
-    #                        labels = c(paste0(seq(0,74,5),
-    #                                          "-",
-    #                                          seq(4,74,5)),
-    #                                   "75+"))) %>%
-    #   ggplot(., aes(x = date,
-    #                 y = p,
-    #                 group = name)) +
-    #   # geom_point() +
-    #   geom_line() +
-    #   facet_wrap(~name) +
-    #   theme_bw() +
-    #   theme(legend.position = "none",
-    #         title = element_text(size = 20),
-    #         strip.text = element_text(size = 16),
-    #         axis.title = element_text(size = 16),
-    #         axis.text.x = element_text(angle = 90)) + 
-    #   labs(x = "Date",
-    #        y = "Coverage",
-    #        title = "Age Specific Vaccination Progress")
   })
   
   
@@ -199,47 +168,26 @@ server <- function(input, output, session) {
   output$pho <- renderPlot({
     dataInput()[["dynamics"]] %>% 
       filter(compartment %in% c("death_o", "cases")) %>%
-      dplyr::select(t, compartment, value, group) %>% 
-      group_by(t, compartment) %>% 
-      summarise(value = sum(value),
-                .groups = "drop") %>% 
-      pivot_wider(names_from = compartment,
-                  values_from = value) %>% 
-      mutate(cases_cum = cumsum(cases),
-             death_cum = cumsum(death_o)) %>% 
-      dplyr::select(-cases, -death_o) %>% 
       full_join(dataInput()[["dynamics_baseline"]] %>% 
-                  filter(compartment %in% c("death_o", "cases")) %>%
-                  dplyr::select(t, compartment, value, group) %>% 
-                  group_by(t, compartment) %>% 
-                  summarise(value = sum(value),
-                            .groups = "drop") %>% 
-                  pivot_wider(names_from = compartment,
-                              values_from = value) %>% 
-                  mutate(cases_cum_baseline = cumsum(cases),
-                         death_cum_baseline = cumsum(death_o)) %>% 
-                  dplyr::select(-cases, -death_o),
-                by = "t") %>% 
-      pivot_longer(cols = c(cases_cum, cases_cum_baseline,
-                            death_cum, death_cum_baseline)) %>% 
-      mutate(date = t + dataInput()[["supply"]]$milestone_date[1]) %>%
-      separate(name, into = c("endpoint","metric", "type")) %>% 
-      mutate(type = if_else(is.na(type), "predicted", type),
-             type = factor(type,
-                           levels = c("baseline",
-                                      "predicted"),
-                           labels = c("No vaccination",
-                                      "Current vaccnation strategy")),
-             endpoint = factor(endpoint,
-                               levels = c("cases", "death"),
-                               labels = c("Cumulative Cases",
-                                          "Cumulative Deaths"))) %>% 
-      ggplot(., aes(x = date,
+                  filter(compartment %in% c("death_o", "cases")),
+                by = c("t", "group", "compartment","population", "run")) %>% 
+      pivot_longer(starts_with("value")) %>% 
+      mutate(policy = if_else(name == "value.y", "0", policy)) %>%
+      distinct %>% dplyr::select(-name) %>% 
+      group_by(policy, t, compartment, run, population) %>% 
+      summarise(value = sum(value), .groups = "drop") %>% 
+      group_by(policy, compartment) %>% group_split() %>% 
+      map(arrange, t) %>% 
+      map(mutate, value_cum = cumsum(value)) %>% 
+      bind_rows() %>% 
+      pivot_longer(starts_with("value")) %>% 
+      mutate(date = lubridate::ymd(dataInput()[["date_start"]])+ t) %>% 
+      ggplot(., aes(x = t,
                     y = value,
-                    group = type,
-                    color = type)) +
+                    group = policy,
+                    color = policy)) +
       geom_line(size = 1.5) +
-      facet_wrap(~endpoint, scale = "free")+
+      facet_wrap(~interaction(compartment, name), scale = "free")+
       theme_bw() +
       theme(legend.position = "bottom",
             title = element_text(size = 20),
@@ -249,7 +197,7 @@ server <- function(input, output, session) {
       ggsci::scale_color_lancet() +
       labs(x = "Date",
            y = "",
-           color = "",
+           color = "Strategy",
            title = "")
   })
   

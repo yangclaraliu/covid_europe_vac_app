@@ -385,3 +385,49 @@ model_selected <- read_rds("fit_derivative.rds") %>%
   bind_rows() %>% 
   dplyr::select(-tmp) %>% 
   mutate(WB = countrycode::countrycode(cn, "country.name","wb"))
+
+# function for generating baseline parameter ombinations
+source("f_gen_country_basics.R")
+# function for updating the baseline parameter set with vaccine characteristics
+source("f_update_vac_char.R")
+# function for updating the baseline parameter set with vaccine policy 
+# characteristics
+source("f_vac_policy.R")
+# load all utility functions
+source("f_utils.R")
+# load healthcare system data
+source("d_healthcare_parameters.R")
+# generate health economics results
+source("f_gen_econ.R")
+
+# different priority settings
+# priority_settings <- list(p1 = c(NA, NA, NA, NA,
+#                                  5,  5,  5,  5,
+#                                  5,  5,  5,  5,
+#                                  4,  3,  2,  1),
+#                           p2 = c(NA, NA, NA, NA,
+#                                  2,  2,  2,  2,
+#                                  2,  2,  2,  2,
+#                                  1,  1,  1,  1),
+#                           p3 = c(NA, NA, NA, NA,
+#                                  1,  1,  1,  1,
+#                                  1,  1,  1,  1,
+#                                  1,  1,  1,  1))
+
+# simulate end dates, determine the end of mobility imputation
+sim_start = "2020-02-15"
+sim_end = "2022-12-31"
+# impute stringency index
+si_post <- 10 # generally should be lower than si_post after examining the data
+recovery_period <- 365 # recovery_period days to recover to si_post level of stringency
+source("d_si_imputation.R")
+source("d_mobility_imputation.R")
+
+priority_policy <- list()
+priority_policy[["p1"]] <- c(rep(NA, 4), rep(1, 12))
+priority_policy[["p2"]] <- c(rep(NA, 4), rep(2, 8), rep(1, 4))
+priority_policy[["p3"]] <- c(rep(NA, 4), rep(1, 8), rep(2, 4))
+priority_policy[["p4"]]  <- c(rep(NA, 4), rep(5, 8), 4, 3, 2, 1)
+
+source("f_gen_econ_within_app.R")
+source("f_simulate_within_app.R")

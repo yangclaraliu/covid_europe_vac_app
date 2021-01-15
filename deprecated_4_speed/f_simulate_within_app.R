@@ -105,6 +105,7 @@ predict_deriv <- function(
             vac_para = vac_para,
             daily_vac = daily_vac,
             econ = econ,
+            date_start = date_start,
             size = size)
 
   return(r)

@@ -26,11 +26,7 @@ source(paste0(cm_path, "/R/covidm.R"))
 #             "</p>",
 #             p("Strategy 4: From the oldest to the youngest adults"))),
 
-# priority_policy <- list()
-# priority_policy[["p1"]] <- c(rep(NA, 4), rep(1, 12))
-# priority_policy[["p2"]] <- c(rep(NA, 4), rep(2, 8), rep(1, 4))
-# priority_policy[["p3"]] <- c(rep(NA, 4), rep(1, 8), rep(2, 4))
-# priority_policy[["p4"]]  <- c(rep(NA, 4), rep(5, 8), 4, 3, 2, 1)
+
 
 # sort_input <- function(input, pattern){
 #   input[startsWith(names(input),pattern)] %>% 
