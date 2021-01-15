@@ -7,7 +7,7 @@ predict_deriv <- function(
                           priority = NULL, # priority settings
                           # date_start, # starting date of uncontrollable community transmission
                           date_end = "2022-12-31",
-                          eff = c(rep(0.9,10),rep(0.8,6)),
+                          eff = NULL,#c(rep(0.9,10),rep(0.8,6)),
                           wane = NULL, # natural waning; vaccine waning
                           R = NULL
                           ){
@@ -34,25 +34,18 @@ predict_deriv <- function(
   S_A <- model_selected %>% filter(WB == wb) %>% pull(S_A)
   date_start <- model_selected %>% filter(WB == wb) %>% pull(start_date) %>% as.Date
   
+  # do not run during debug
   ms_date <- ms_date %>% 
     .[!is.na(.)] %>% 
     as.numeric %>%
     as.Date(., origin = "1970-01-01") %>% 
     as.character()
 
+  
+  #
   ms_cov <- ms_cov %>% 
     .[!is.na(.)] %>% 
     as.numeric 
-  
-  ps <- case_when(
-    # Strategy 1: All Adults
-    priority == "Strategy 1" ~ c(rep(NA,4), rep(1,12)),
-    # Strategy 2: All 60+, then all younger adults
-    priority == "Strategy 2" ~ c(rep(NA,4), rep(2, 8), rep(1, 4)),
-    # Strategy 3: All younger adults, then all elderly
-    priority == "Strategy 3" ~ c(rep(NA,4), rep(1, 8), rep(2, 4)),
-    # Strategy 4: All the oldest to the youngest adults
-    priority == "Strategy 4" ~ c(rep(NA,4), rep(5, 8), 4, 3, 2, 1))
   
   gen_country_basics(country = cn,
                      waning_nat = wane[1]*7,
@@ -62,36 +55,44 @@ predict_deriv <- function(
                      date_end = date_end,
                      # size of seasonal component
                      s_A = S_A,
-                     deterministic = TRUE) -> params_baseline
-  
-  params_baseline %>% 
+                     deterministic = TRUE) %>% 
     update_vac_char(para = .,
                     waning_vac = wane[2]*7,
-                    ve = eff)  %>%
-    vac_policy(para = .,
-               # milestone dates
-               milestone_date = ms_date,
-               # milestone coverage levels
-               milestone_cov = ms_cov,# as.numeric(as.vector(ms[,2])),
-               # priority settings
-               priority = ps,#as.vector(ps),
-               cov_max = cov_tar) -> params
-
-  res <- cm_simulate(params$param)
-  res_baseline <- cm_simulate(params_baseline)
-
-  econ <- gen_econ_app(para = params, 
-               dyna = res$dynamics,
-               dyna_baseline = res_baseline$dynamics,
-               cn_tmp = cn)
+                    ve = eff) -> params_baseline
   
-  size <- params$param$pop[[1]]$size
+  priority_policy %>% 
+    map(~vac_policy(para = params_baseline,
+                    milestone_date = ms_date,
+                    milestone_cov = ms_cov,
+                    priority = .,
+                    cov_max = cov_tar)) -> params
+
+  res <- dyna <- list()
+  for(i in seq_along(priority_policy)) {
+    res[[i]] <- cm_simulate(params[[i]]$param)
+    dyna[[i]] <- res[[i]]$dynamics
+  }
+  res_baseline <- cm_simulate(params_baseline)
+   
+  map2(params,
+       dyna,
+       function(x, y){
+         gen_econ_app(para = x,
+                      dyna = y,
+                      dyna_baseline = res_baseline$dynamics,
+                      cn_tmp = cn)
+       }
+  ) %>% 
+    bind_rows(.id = "policy") %>% 
+    data.table() -> econ
+  
+  size <- params[[1]]$param$pop[[1]]$size
   
   r <- list(dynamics_baseline = data.table(res_baseline$dynamics),
-            dynamics = data.table(res$dynamics),
-            supply = params$supply,
-            vac_para = params$vac_para,
-            daily_vac = params$daily_vac,
+            dynamics = bind_rows(dyna, .id = "policy"),
+            supply = params[[1]]$supply,
+            vac_para = params[[1]]$vac_para,
+            daily_vac = params[[1]]$daily_vac,
             econ = econ,
             size = size)
 

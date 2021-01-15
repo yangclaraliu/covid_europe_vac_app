@@ -1,21 +1,62 @@
-
 server <- function(input, output, session) {
+  output$ms_dates <- renderUI({
+    lapply(1:input$n_ms, function(x) dateInput(paste0("date",x), 
+                                      paste0("Milestone Date (", x, ")"), 
+                                      value = as.character(as.Date(Sys.time())), # as.character(NA),
+                                      format = "yyyy-mm-dd",
+                                      min = "2020-01-01",
+                                      max = "2022-12-31"
+                                      ))
+  })
+  
+  output$ms_covs <- renderUI({
+    lapply(1:input$n_ms, function(x) numericInput(paste0("cov",x), 
+                                                  paste0("Milestone Coverage (", x, ")"), 
+                                                  value = if_else(x == 1, 
+                                                                  0, 
+                                                                  as.numeric(NA)
+                                                                  ),
+                                                  min = 0, 
+                                                  max = if_else(x == 1, 0, 1), 
+                                                  step = 0.01))
+  })
+  
+  observe({
+    shinyjs::onclick("toggleEpi",
+                     shinyjs::toggle(id = "Epi", anim = T))
+  })
+  
   
   dataInput <- eventReactive(input$update, {
     predict_deriv(
       # country name
       cn = input$cn,
       # vaccination saturation cap
-      cov_tar = input$cov_tar,
+      cov_tar = input$max_cov,
       # vaccination milestones (date)
-      ms_date = c(input$date1, input$date2, 
-                  input$date3, input$date4, 
-                  input$date5),
-      ms_cov = c(input$cov1, input$cov2,
-                 input$cov3, input$cov4,
-                 input$cov5),
+      ms_date = sapply(1:input$n_ms, function(x){
+        req(input[[paste0("date", x)]]);
+        input[[paste0("date", x)]]
+      }),
+                # as.vector(input[[paste0("date", 1:input$n_ms)]]),
+                # input[startsWith("date", names(input))] %>% unlist,
+                # sort_input(input, "date"),
+                # c(input$date1, input$date2), 
+                # input$date3, input$date4, 
+                # input$date5),
+      ms_cov =  sapply(1:input$n_ms, function(x){
+        req(input[[paste0("cov", x)]]);
+        input[[paste0("cov", x)]]
+      }),
+                #as.vector(input[[paste0("cov", 1:input$n_ms)]]),
+                # input[startsWith("cov", names(input))] %>% unlist,
+                # sort_input(input, "cov"),
+                # c(input$cov1, input$cov2),
+                # input$cov3, input$cov4,
+                # input$cov5),
       # priority strategy selected
-      priority = input$priority,
+      priority = priority_policy,
+      eff = rep(input$ve, 16),
       # c(natural immunity duration, vaccine induced immunity duration)
       wane = c(input$waning_nat, input$waning_vac),
       # basic reproduction number 
@@ -23,9 +64,19 @@ server <- function(input, output, session) {
     )
   })
   
-  #### supply pplot ####
+  # 
+  output$test <- renderPrint({
+    sapply(1:input$n_ms, function(x){
+      input[[paste0("date", x)]]
+    }) %>% print
+    # paste(sapply(1:length(names(input)), function(x) (input[[names(input)[[x]]]])),
+    #       collapse = "++++")
+  })
+  
+  #### supply plot ####
   output$supply <- renderPlot({
     dataInput()[["supply"]]%>% 
+    # r$supply %>% 
       mutate(tot = if_else(is.na(doses), 0, doses),
              tot = cumsum(tot)) %>% 
       full_join(data.frame(date = seq(as.Date("2020-02-05"),

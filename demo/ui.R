@@ -1,80 +1,103 @@
 ui <- fluidPage(
+  # set up shiny js
+  shinyjs::useShinyjs(),
+  shinyjs::inlineCSS(list(.big = "font-size: 2em")),
+  
+  # title
   titlePanel("Covid Vax"),
   
   fluidRow(
-    column(4,
+    column(3,
+           #### Input = cn ####
            selectInput(
              "cn",
              "Choose a country:",
              selected = "Belgium",
              list(`countries` = as.list(members$country_name))
            ),
-           numericInput("rn", 
-                        "Basic Reproduction Number", 
-                        value = 2.7, 
-                        min = 1, max = 3, step = 0.1),
-           numericInput("waning_nat", 
-                        "Waning of Natural Immunity (Weeks)", 
-                        value = 45, 
-                        min = 20, max = 104, step = 1),
-           numericInput("waning_vac", 
-                        "Waning of Vaccine Induced Immunity (Weeks)", 
-                        value = 52, 
-                        min = 20, max = 104, step = 1),
-           numericInput("cov_tar", 
-                        "Vaccination Uptake Cap", 
+           a(id = "toggleEpi",
+             "Show/Hide Epidemic Parameters",
+             href = "#"),
+           shinyjs::hidden(
+             div(
+               id = "Epi",
+               #### Input = rn #### 
+               numericInput("rn", 
+                            "Basic Reproduction Number", 
+                            value = 2.7, 
+                            min = 1, max = 3, step = 0.1),
+               #### Input = waning_nat #### 
+               numericInput("waning_nat", 
+                            "Waning of Natural Immunity (Weeks)", 
+                            value = 45, 
+                            min = 20, max = 104, step = 1) 
+             )
+           ),
+           h4("Vaccine Characteristics"),
+           #### Input = ve  #### 
+           sliderInput("ve",
+                       "Vaccine Efficacy",
+                       min = 0,
+                       max = 1,
+                       value = 0.9),
+           #### Input = waning_vac #### 
+           sliderInput("waning_vac", 
+                        "Waning of Vaccine Induced Immunity (Year)", 
+                        value = 1, 
+                        min = 0.5, max = 2, step = 0.5),
+           #### Input = max_cov #### 
+           sliderInput("max_cov", 
+                        "Maximum Vaccination Uptake", 
                         value = 0.8, 
-                        min = 0, max = 1, step = 0.1),
-           selectInput("priority", 
-                       "Priority Setting",
-                       c("Strategy 1",
-                         "Strategy 2",
-                         "Strategy 3",
-                         "Strategy 4")),
+                        min = 0, max = 1, step = 0.1)
+    ),
+    column(8,
+           h3("Vaccine Strategy Set Up"),
+           h4("Priority Setting"),
            HTML(paste0(p("Strategy 1: All Adults"),
                        "</p>",
                        p("Strategy 2: All 60+, then all younger adults"),
                        "</p>",
                        p("Strategy 3: All younger adults, then all elderly"),
                        "</p>",
-                       p("Strategy 4: From the oldest to the youngest adults")))
-    ),
-    column(4,
-           h4("Vaccination Progress Milestones"),
-           dateInput("date1", "Start date", value = "2021-01-01"),
-           dateInput("date2", "Second", value = "2021-06-30"),
-           dateInput("date3", "Third", value = "2021-12-31"),
-           dateInput("date4", "Fourth", value = NA),
-           dateInput("date5", "Last", value = "2022-12-31")
-    ),
-    column(4,
-           h4("Vaccination Coverage Milestones"),
-           numericInput("cov1", HTML("Starting from"), value = 0, 
-                        min = 0, max = 0, step = 0.00),
-           numericInput("cov2", "Second", value = 0.03, 
-                        min = 0, max = 1, step = 0.01),
-           numericInput("cov3", "Third", value = 0.20, 
-                        min = 0, max = 1, step = 0.01),
-           numericInput("cov4", "Fourth", value = NA, 
-                        min = 0, max = 1, step = 0.01),
-           numericInput("cov5", "Last", value = 0.6, 
-                        min = 0, max = 1, step = 0.01),
-           br(),
-           p("*Vaccination coverage will always start from 0."))
+                       p("Strategy 4: From the oldest to the youngest adults"))),
+           #### Input = n_ms #### 
+           numericInput(
+             inputId = "n_ms",
+             label = "Number of Milestones",
+             min = 2,
+             max = 10,
+             step = 1,
+             value = 2
+           ),
+           actionButton("refresh", "Refresh Milestones"),
+           fluidRow(
+             column(4,
+                    h4("Vaccination Progress Milestones"),
+                    uiOutput("ms_dates")
+                    ),
+             column(4,
+                    h4("Vaccination Coverage Milestones"),
+                    uiOutput("ms_covs"),
+                    br(),
+                    p("*Vaccination coverage will always start from 0.")
+             )
+           )
+    )
   ),
   
   hr(),
-  
   actionButton("update", "Run with Current Parameters"),
-  
+  hr(),
   tabsetPanel(
-    type = "tabs",
-    
+    tabPanel(
+      title = "Test",
+      verbatimTextOutput('test')
+    ),
     tabPanel(
       title = "Overall Vaccine Supply",
       plotOutput('supply', height = 800)
     ),
-    
     tabPanel(
       title = "Vaccination Progress (by age)",
       plotOutput('daily_vac', height = 800)
