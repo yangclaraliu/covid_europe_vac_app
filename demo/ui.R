@@ -30,7 +30,17 @@ ui <- fluidPage(
                numericInput("waning_nat", 
                             "Waning of Natural Immunity (Weeks)", 
                             value = 45, 
-                            min = 20, max = 104, step = 1) 
+                            min = 20, max = 104, step = 1),
+               #### Input = date_start ####
+               dateInput("date_start",
+                         "Simulation Start Date",
+                         value = "2020-02-05"), #
+               #### Input = date_end ####
+               dateInput("date_end",
+                         "Simulation End Date",
+                         value = "2022-12-31",
+                         min = "2022-12-31",
+                         max = "2022-12-31")
              )
            ),
            h4("Vaccine Characteristics"),

@@ -22,6 +22,16 @@ server <- function(input, output, session) {
   })
   
   observe({
+    cn_label <- countrycode::countrycode(input$cn, "country.name", "wb")
+    updateDateInput(session,
+                    inputId = "date_start",
+                    value = model_selected[model_selected$WB == cn_label,
+                                           "start_date"]  %>% 
+                      as.numeric %>% 
+                      as.Date(., origin = "1970-01-01") )
+  })
+  
+  observe({
     shinyjs::onclick("toggleEpi",
                      shinyjs::toggle(id = "Epi", anim = T))
   })
@@ -55,6 +65,7 @@ server <- function(input, output, session) {
                 # input$cov3, input$cov4,
                 # input$cov5),
       # priority strategy selected
+      date_start = input$date_start,
       priority = priority_policy,
       eff = rep(input$ve, 16),
       # c(natural immunity duration, vaccine induced immunity duration)
@@ -116,12 +127,15 @@ server <- function(input, output, session) {
     dataInput()[["daily_vac"]] %>% 
       mutate(date =   dataInput()[["supply"]]$milestone_date[1] + as.numeric(t)) %>% 
       dplyr::select(-t, -supply) %>%
-      mutate_at(vars(starts_with("Y")), cumsum) %>% 
+      group_by(policy) %>% group_split() %>% 
+      map(mutate_at, vars(starts_with("Y")), cumsum) %>% 
+      bind_rows() %>% 
+      # mutate_at(vars(starts_with("Y")), cumsum) %>% 
       pivot_longer(cols = starts_with("Y")) %>% 
       # filter(value > 0) %>% 
       left_join(data.frame(name = paste0("Y",1:16),
                            pop = dataInput()[["size"]]),# params$param$pop[[1]]$size),
-                by = "name") %>% 
+                by = "name") %>%
       mutate(p = value/pop,
              name = factor(name,
                            levels = paste0("Y",1:16),
@@ -131,19 +145,53 @@ server <- function(input, output, session) {
                                       "75+"))) %>%
       ggplot(., aes(x = date,
                     y = p,
-                    group = name)) +
+                    color = policy,
+                    group = interaction(name, policy))) +
       # geom_point() +
       geom_line() +
       facet_wrap(~name) +
       theme_bw() +
-      theme(legend.position = "none",
+      theme(legend.position = "bottom",
             title = element_text(size = 20),
             strip.text = element_text(size = 16),
             axis.title = element_text(size = 16),
             axis.text.x = element_text(angle = 90)) + 
       labs(x = "Date",
            y = "Coverage",
-           title = "Age Specific Vaccination Progress")
+           color = "Strategy",
+           title = "Age Specific Vaccination Progress") +
+      ggsci::scale_color_lancet()
+    # dataInput()[["daily_vac"]] %>% 
+    #   mutate(date =   dataInput()[["supply"]]$milestone_date[1] + as.numeric(t)) %>% 
+    #   dplyr::select(-t, -supply) %>%
+    #   mutate_at(vars(starts_with("Y")), cumsum) %>% 
+    #   pivot_longer(cols = starts_with("Y")) %>% 
+    #   # filter(value > 0) %>% 
+    #   left_join(data.frame(name = paste0("Y",1:16),
+    #                        pop = dataInput()[["size"]]),# params$param$pop[[1]]$size),
+    #             by = "name") %>% 
+    #   mutate(p = value/pop,
+    #          name = factor(name,
+    #                        levels = paste0("Y",1:16),
+    #                        labels = c(paste0(seq(0,74,5),
+    #                                          "-",
+    #                                          seq(4,74,5)),
+    #                                   "75+"))) %>%
+    #   ggplot(., aes(x = date,
+    #                 y = p,
+    #                 group = name)) +
+    #   # geom_point() +
+    #   geom_line() +
+    #   facet_wrap(~name) +
+    #   theme_bw() +
+    #   theme(legend.position = "none",
+    #         title = element_text(size = 20),
+    #         strip.text = element_text(size = 16),
+    #         axis.title = element_text(size = 16),
+    #         axis.text.x = element_text(angle = 90)) + 
+    #   labs(x = "Date",
+    #        y = "Coverage",
+    #        title = "Age Specific Vaccination Progress")
   })
   
   

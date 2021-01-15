@@ -5,7 +5,7 @@ predict_deriv <- function(
                           ms_date = NULL, # milestone - dates
                           ms_cov = NULL, # milestones - coverage levels
                           priority = NULL, # priority settings
-                          # date_start, # starting date of uncontrollable community transmission
+                          date_start = NULL, # starting date of uncontrollable community transmission
                           date_end = "2022-12-31",
                           eff = NULL,#c(rep(0.9,10),rep(0.8,6)),
                           wane = NULL, # natural waning; vaccine waning
@@ -32,7 +32,13 @@ predict_deriv <- function(
   # fcontent
   wb <- countrycode::countrycode(cn, "country.name", "wb")
   S_A <- model_selected %>% filter(WB == wb) %>% pull(S_A)
-  date_start <- model_selected %>% filter(WB == wb) %>% pull(start_date) %>% as.Date
+  # debugging version
+  # date_start <- model_selected %>% filter(WB == wb) %>% pull(start_date) %>% as.Date
+  # model version
+  date_start <- as.numeric(date_start) %>%
+    as.Date(., origin = "1970-01-01") %>%
+    as.character()
+  
   
   # do not run during debug
   ms_date <- ms_date %>% 
@@ -67,10 +73,12 @@ predict_deriv <- function(
                     priority = .,
                     cov_max = cov_tar)) -> params
 
-  res <- dyna <- list()
+  res <- dyna <- daily_vac <- vac_para <- list()
   for(i in seq_along(priority_policy)) {
     res[[i]] <- cm_simulate(params[[i]]$param)
     dyna[[i]] <- res[[i]]$dynamics
+    vac_para[[i]] <- params[[i]]$vac_para
+    daily_vac[[i]] <- params[[i]]$daily_vac
   }
   res_baseline <- cm_simulate(params_baseline)
    
@@ -88,11 +96,14 @@ predict_deriv <- function(
   
   size <- params[[1]]$param$pop[[1]]$size
   
+  daily_vac %<>% bind_rows(.id = "policy")
+  vac_para %<>% bind_rows(.id = "policy")
+  
   r <- list(dynamics_baseline = data.table(res_baseline$dynamics),
             dynamics = bind_rows(dyna, .id = "policy"),
             supply = params[[1]]$supply,
-            vac_para = params[[1]]$vac_para,
-            daily_vac = params[[1]]$daily_vac,
+            vac_para = vac_para,
+            daily_vac = daily_vac,
             econ = econ,
             size = size)
 
