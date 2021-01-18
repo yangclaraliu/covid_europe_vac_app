@@ -72,27 +72,14 @@ ui <- fluidPage(
                        "</p>",
                        p("Strategy 4: From the oldest to the youngest adults"))),
            #### Input = n_ms #### 
-           numericInput(
-             inputId = "n_ms",
-             label = "Number of Milestones",
-             min = 2,
-             max = 10,
-             step = 1,
-             value = 2
+           selectInput(
+             inputId = "type_ms",
+             label = "Milestones Setup",
+             choices = c("Preload",
+                         "Customised"),
+             selected = "Preload"
            ),
-           actionButton("refresh", "Refresh Milestones"),
-           fluidRow(
-             column(4,
-                    h4("Vaccination Progress Milestones"),
-                    uiOutput("ms_dates")
-                    ),
-             column(4,
-                    h4("Vaccination Coverage Milestones"),
-                    uiOutput("ms_covs"),
-                    br(),
-                    p("*Vaccination coverage will always start from 0.")
-             )
-           )
+           uiOutput("panel_ms")
     )
   ),
   

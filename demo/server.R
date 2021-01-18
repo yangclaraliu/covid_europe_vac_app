@@ -1,24 +1,69 @@
 server <- function(input, output, session) {
   output$ms_dates <- renderUI({
-    lapply(1:input$n_ms, function(x) dateInput(paste0("date",x), 
-                                      paste0("Milestone Date (", x, ")"), 
-                                      value = as.character(as.Date(Sys.time())), # as.character(NA),
-                                      format = "yyyy-mm-dd",
-                                      min = "2020-01-01",
-                                      max = "2022-12-31"
-                                      ))
+    lapply(1:as.numeric(input$n_ms), function(x) {
+      dateInput(paste0("date",x), 
+                paste0("Milestone Date (", x, ")"), 
+                format = "yyyy-mm-dd",
+                value = if_else(x == 1, 
+                                "2020-01-08",
+                                "2022-12-31"
+                                ), # as.character(as.Date(Sys.time())),
+                min = "2020-01-01",
+                max = "2022-12-31"
+      )}
+    )
   })
   
   output$ms_covs <- renderUI({
-    lapply(1:input$n_ms, function(x) numericInput(paste0("cov",x), 
-                                                  paste0("Milestone Coverage (", x, ")"), 
-                                                  value = if_else(x == 1, 
-                                                                  0, 
-                                                                  as.numeric(NA)
-                                                                  ),
-                                                  min = 0, 
-                                                  max = if_else(x == 1, 0, 1), 
-                                                  step = 0.01))
+    lapply(1:as.numeric(input$n_ms), function(x) {
+      numericInput(paste0("cov",x), 
+                   paste0("Milestone Coverage (", x, ")"), 
+                   value = case_when(
+                     x == 1 ~ 0,
+                     x == input$n_ms ~ 0.5,
+                     TRUE ~ as.numeric(NA)
+                   ),
+                   min = 0, 
+                   max = 1, 
+                   step = 0.01)
+    })
+  })
+  
+  output$panel_ms <- renderUI({
+    if (is.null(input$type_ms))
+      return()
+    
+    switch(input$type_ms,
+           "Preload" = selectInput(
+             inputId = "preload_ms",
+             label = "Choose Vaccination Rollout Plan from the Dropdown Menu:",
+             choices = c("Linear Increase",
+                         "Exponential Increase",
+                         "Sigmoid Increase"),
+             selected = "Linear Increase"
+           ),
+           "Customised" = list(numericInput(
+             inputId = "n_ms",
+             label = "Number of Milestones",
+             min = 2,
+             max = 10,
+             step = 1,
+             value = 2
+           ),
+           # actionButton("refresh", "Update Milestones"),
+           fluidRow(
+             column(4,
+                    h4("Vaccination Progress Milestones"),
+                    uiOutput("ms_dates")
+                    ),
+             column(4,
+                    h4("Vaccination Coverage Milestones"),
+                    uiOutput("ms_covs"),
+                    br(),
+                    p("*Vaccination coverage will always start from 0.")
+             )
+           )
+           ))
   })
   
   observe({
