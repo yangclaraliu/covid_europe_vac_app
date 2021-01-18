@@ -63,9 +63,9 @@ if (cm_build_) {
 }
 
 # Attach data
-packageStartupMessage("Loading data...");
-cm_matrices     = readRDS(paste0(cm_path_, "/data/all_matrices.rds"));
-cm_populations  = readRDS(paste0(cm_path_, "/data/wpp2019_pop2020.rds"));
-cm_structure_UK = readRDS(paste0(cm_path_, "/data/structure_UK.rds"));
-cm_highrisk     = readRDS(paste0(cm_path_, "/data/prevalence_morbidities.rds"))
+# packageStartupMessage("Loading data...");
+# cm_matrices     = readRDS(paste0(cm_path_, "/data/all_matrices.rds"));
+# cm_populations  = readRDS(paste0(cm_path_, "/data/wpp2019_pop2020.rds"));
+# cm_structure_UK = readRDS(paste0(cm_path_, "/data/structure_UK.rds"));
+# cm_highrisk     = readRDS(paste0(cm_path_, "/data/prevalence_morbidities.rds"))
 

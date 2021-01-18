@@ -18,13 +18,8 @@ gen_country_basics <- function(country,
            date >= lubridate::ymd(date_start),
            date <= lubridate::ymd(date_end))
 
-  t_run <- seq(from = as.Date(date_start),
-               to = as.Date(date_end),
-               by = "day") %>% length
-  
-  if(nrow(c_tmp) != t_run) stop("The mobility table and date duration 
-                                are of different lengths!")
-  
+  t_run <- nrow(c_tmp)
+
   para = cm_parameters_SEI3R(dem_locations = country, 
                              date_start = date_start, 
                              date_end = date_end,
@@ -34,8 +29,8 @@ gen_country_basics <- function(country,
                              dIs = cm_delay_gamma(3.5, 4.0, t_max = 15, t_step = 0.25)$p,
                              dIa = cm_delay_gamma(5.0, 4.0, t_max = 15, t_step = 0.25)$p,
                              deterministic = deterministic)
+  
   n_age_groups <- length(para$pop[[1]]$size)
-  para$pop[[1]]$wn = rep((1/waning_nat), n_age_groups)
   
   for(i in 1:length(para$pop)){
     
@@ -47,8 +42,7 @@ gen_country_basics <- function(country,
     para$pop[[i]]$u = para$pop[[i]]$u * R0_assumed / current_R0
     
     # natural waning
-    para$pop[[i]]$wn <- rep(1/waning_nat, 
-                            length(para$pop[[i]]$group_names))
+    para$pop[[i]]$wn <- rep((1/waning_nat), n_age_groups)
     
     ## Set seeds to control start of outbreak
     para$pop[[i]]$dist_seed_ages = cm_age_coefficients(20, 50, 5 * (0:length(para$pop[[i]]$size))) # infections start in individuals aged 20-50
@@ -80,9 +74,6 @@ gen_country_basics <- function(country,
       map(as.vector) %>%
       unname,
     times = 1:t_run)
-  
-  current_R0 = cm_calc_R0(para, 1)
-  para$pop[[1]]$u = para$pop[[1]]$u * R0_assumed/ current_R0
   
   return(para)
 }

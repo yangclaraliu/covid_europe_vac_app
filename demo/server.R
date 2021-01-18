@@ -181,8 +181,8 @@ server <- function(input, output, session) {
       map(mutate, value_cum = cumsum(value)) %>% 
       bind_rows() %>% 
       pivot_longer(starts_with("value")) %>% 
-      mutate(date = lubridate::ymd(dataInput()[["date_start"]])+ t) %>% 
-      ggplot(., aes(x = t,
+      mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
+      ggplot(., aes(x = date,
                     y = value,
                     group = policy,
                     color = policy)) +
@@ -201,24 +201,37 @@ server <- function(input, output, session) {
            title = "")
   })
   
-  output$econ <- DT::renderDataTable({
+  output$econ <- renderPlot({
     dataInput()[["econ"]]  %>% 
-      separate(name, into = c("policy", "var","unit")) %>% 
+      separate(name, into = c("tag", "var","unit")) %>% 
       mutate(unit = if_else(is.na(unit), 
                             "Overall Loss Reduction", 
-                            "Per-dose Loss Reduction")) %>% 
-      pivot_wider(names_from = unit,
-                  values_from = value) %>% 
-      dplyr::select(-wb, -policy) %>% 
-      mutate(var = c("Life Expectancy",
-                     "Comorbidity-adjusted Life Expectancy",
-                     "Quality-adjusted Life Expectancy",
-                     "VSL (mln. USD)",
-                     "Morbidity-related QALY",
-                     "Total QALY (AEFI + morbidity + mortality)")) %>% 
-      rename(Metrics = var) %>% 
-      mutate(`Overall Loss Reduction` = round(`Overall Loss Reduction`),
-             `Per-dose Loss Reduction` = round(`Per-dose Loss Reduction`,4))
-    
+                            "Per-dose Loss Reduction")) %>%
+      mutate(var = factor(var,
+                          levels = c("LE", "adjLE", "adjQALEdisc",
+                                     "VSLmlns", "QALYcases", "QALYloss"),
+                          labels = c("Life Expectancy",
+                                     "Comorbidity-adjusted Life Expectancy",
+                                     "Quality-adjusted Life Expectancy",
+                                     "VSL (mln. USD)",
+                                     "Morbidity-related QALY",
+                                     "Total QALY (AEFI + morbidity + mortality)")),
+             policy = parse_number(policy),
+             policy = factor(policy,
+                             levels = c(0:4))) %>% 
+      ggplot(., aes(x = policy, 
+                    y = value,
+                    color = policy,
+                    fill = policy)) +
+      geom_bar(stat = "identity") +
+      facet_wrap(~var) +
+      ggsci::scale_color_lancet() +
+      ggsci::scale_fill_lancet() +
+      theme_bw() +
+      theme(legend.position = "bottom",
+            title = element_text(size = 20),
+            strip.text = element_text(size = 16),
+            legend.text = element_text(size = 16),
+            axis.title = element_text(size = 16))
   })
 }

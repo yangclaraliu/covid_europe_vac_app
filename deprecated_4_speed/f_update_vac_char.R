@@ -5,7 +5,7 @@
 # Objective: parameterise vaccine characteristics in covidm
 
 update_vac_char <- function(para,
-                            waning_vac = 52*1,
+                            waning_vac = 52*7,
                             ve = c(rep(0.7,10),rep(0.5,6))){
   
   require(covidm)

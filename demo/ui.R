@@ -100,10 +100,10 @@ ui <- fluidPage(
   actionButton("update", "Run with Current Parameters"),
   hr(),
   tabsetPanel(
-    tabPanel(
-      title = "Test",
-      verbatimTextOutput('test')
-    ),
+    # tabPanel(
+    #   title = "Test",
+    #   verbatimTextOutput('test')
+    # ),
     tabPanel(
       title = "Overall Vaccine Supply",
       plotOutput('supply', height = 800)
@@ -118,7 +118,7 @@ ui <- fluidPage(
     ),
     tabPanel(
       title = "Health Economics Outcomes",
-      DT::dataTableOutput('econ')
+      plotOutput('econ')
     )
   )
 )
