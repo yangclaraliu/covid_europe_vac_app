@@ -14,8 +14,8 @@
 - `ms_dates`: technically an output object, UI object to be rendered to obtain milestone dates dynamically
 - `n_ms`: number of milestones
 - `panel_ms`: panels of milestones, either preloaded or customised, entered by individual user
-- `waning_nat`: waning of infection induced natural immunity
-- `waning_vac`: waning of vaccine induced immunity
+- `waning_nat`: waning of infection induced natural immunity (weeks)
+- `waning_vac`: waning of vaccine induced immunity (years)
 - `rn`: basic reproduction number
 - `type_ms`: type of milestones, pre-loaded sets of milestones (i.e., "Preload") or customized, entered by individual user (i.e., "Customised")
 - `ve`: vaccine efficacy

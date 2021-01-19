@@ -24,11 +24,11 @@ vac_progress <- list()
  # exponential vaccination
  f <- function(r){
 
-      abs(GeometricSequence(t, 6e-7, r) %>% sum - obj)
+      abs(GeometricSequence(t, 1e-8, r) %>% sum - obj)
 }
 res <- optimize(f, c(0.9,1.1))
 r <- res$minimum
-GeometricSequence(t, 6e-7, r) -> vac_progress[["exponential"]]
+GeometricSequence(t, 1e-8, r) -> vac_progress[["exponential"]]
 
 # 
 sigmoid(-5:5) %>% 

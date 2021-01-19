@@ -5,7 +5,7 @@ server <- function(input, output, session) {
                 paste0("Milestone Date (", x, ")"), 
                 format = "yyyy-mm-dd",
                 value = if_else(x == 1, 
-                                "2020-01-08",
+                                as.character(as.Date(Sys.time())),
                                 "2022-12-31"
                                 ), # as.character(as.Date(Sys.time())),
                 min = "2020-01-01",
@@ -34,13 +34,16 @@ server <- function(input, output, session) {
       return()
     
     switch(input$type_ms,
-           "Preload" = selectInput(
-             inputId = "preload_ms",
-             label = "Choose Vaccination Rollout Plan from the Dropdown Menu:",
-             choices = c("Linear Increase",
-                         "Exponential Increase",
-                         "Sigmoid Increase"),
-             selected = "Linear Increase"
+           "Preload" = list(
+             selectInput(
+               inputId = "preload_ms",
+               label = "Choose Vaccination Rollout Plan from the Dropdown Menu:",
+               choices = c("Linear Increase",
+                           "Exponential Increase",
+                           "Sigmoid Increase"),
+               selected = "Linear Increase"
+             ),
+             helpText("Overall vaccine coverage is assumed to reach 50% on 2022-12-31.")
            ),
            "Customised" = list(numericInput(
              inputId = "n_ms",
@@ -73,7 +76,8 @@ server <- function(input, output, session) {
                     value = model_selected[model_selected$WB == cn_label,
                                            "start_date"]  %>% 
                       as.numeric %>% 
-                      as.Date(., origin = "1970-01-01") )
+                      as.Date(., origin = "1970-01-01") %>% 
+                      as.character) 
   })
   
   observe({
@@ -88,21 +92,27 @@ server <- function(input, output, session) {
       cn = input$cn,
       # vaccination saturation cap
       cov_tar = input$max_cov,
+      type_ms = input$type_ms,
+      pattern_label = input$preload_ms,
       # vaccination milestones (date)
-      ms_date = sapply(1:input$n_ms, function(x){
+      ms_date = sapply(
+        1:input$n_ms, 
+        function(x){
         req(input[[paste0("date", x)]]);
         input[[paste0("date", x)]]
-      }),
+        }),
                 # as.vector(input[[paste0("date", 1:input$n_ms)]]),
                 # input[startsWith("date", names(input))] %>% unlist,
                 # sort_input(input, "date"),
                 # c(input$date1, input$date2), 
                 # input$date3, input$date4, 
                 # input$date5),
-      ms_cov =  sapply(1:input$n_ms, function(x){
+      ms_cov =  sapply(
+        1:input$n_ms, 
+        function(x){
         req(input[[paste0("cov", x)]]);
         input[[paste0("cov", x)]]
-      }),
+        }),
                 #as.vector(input[[paste0("cov", 1:input$n_ms)]]),
                 # input[startsWith("cov", names(input))] %>% unlist,
                 # sort_input(input, "cov"),
@@ -111,7 +121,6 @@ server <- function(input, output, session) {
                 # input$cov5),
       # priority strategy selected
       date_start = input$date_start,
-      priority = priority_policy,
       eff = rep(input$ve, 16),
       # c(natural immunity duration, vaccine induced immunity duration)
       wane = c(input$waning_nat, input$waning_vac),
@@ -121,44 +130,32 @@ server <- function(input, output, session) {
   })
   
   # 
-  output$test <- renderPrint({
-    sapply(1:input$n_ms, function(x){
-      input[[paste0("date", x)]]
-    }) %>% print
-    # paste(sapply(1:length(names(input)), function(x) (input[[names(input)[[x]]]])),
-    #       collapse = "++++")
-  })
+  # output$test <- renderPrint({
+  #   input$date_start
+  # })
   
   #### supply plot ####
   output$supply <- renderPlot({
-    dataInput()[["supply"]]%>% 
-    # r$supply %>% 
-      mutate(tot = if_else(is.na(doses), 0, doses),
-             tot = cumsum(tot)) %>% 
-      full_join(data.frame(date = seq(as.Date("2020-02-05"),
-                                      as.Date("2022-12-31"),
-                                      1)),
-                by = c("milestone_date" = "date")) %>% 
-      arrange(milestone_date) %>% 
-      mutate(doses_daily = zoo::na.locf(doses_daily, na.rm = F),
-             doses_daily = if_else(is.na(doses_daily), 0, doses_daily)) %>%
-      # filter(!is.na(tot)) %>% 
-      pivot_longer(cols = c(tot, doses_daily)) %>% 
-      filter(!(name == "tot" & is.na(value))) %>%
+   dataInput()[["main"]]%>% 
+   #  main %>%
+      dplyr::filter(policy == 1) %>% 
+      dplyr::select(date, doses_daily, supply) %>%
+      pivot_longer(cols = c(doses_daily, supply)) %>% 
       mutate(name = factor(name,
-                           levels = c("tot", "doses_daily"),
-                           labels = c("Total Vaccine Doses Available",
-                                      "Daily Vaccine Doses Available"))) %>% 
-      ggplot(., aes(x = milestone_date,
+                           levels = c("doses_daily", "supply"),
+                           labels = c(
+                             "Daily Vaccine Doses Available",
+                             "Total Vaccine Doses Available"))) %>% 
+      ggplot(., aes(x = date,
                     y = value)) +
-      geom_line() +
-      geom_point(aes(alpha = name)) +
+      geom_point() +
       scale_alpha_manual(values = c(1,0)) +
       theme_bw() +
       theme(legend.position = "none",
-            title = element_text(size = 20),
-            strip.text = element_text(size = 16),
-            axis.title = element_text(size = 16)) +
+            title = element_text(size = 24),
+            strip.text = element_text(size = 20),
+            axis.text = element_text(size = 20),
+            axis.title = element_text(size = 20)) +
       facet_wrap(~name,
                  scale = "free") +
       labs(title = "Vaccine Supply (Daily)",

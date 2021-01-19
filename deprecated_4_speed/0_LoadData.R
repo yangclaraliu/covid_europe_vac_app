@@ -393,6 +393,7 @@ source("f_update_vac_char.R")
 # function for updating the baseline parameter set with vaccine policy 
 # characteristics
 source("f_vac_policy.R")
+source("f_vac_policy_preload.R")
 # load all utility functions
 source("f_utils.R")
 # load healthcare system data
@@ -431,3 +432,6 @@ priority_policy[["p4"]]  <- c(rep(NA, 4), rep(5, 8), 4, 3, 2, 1)
 
 source("f_gen_econ_within_app.R")
 source("f_simulate_within_app.R")
+source("d_vac_progress.R")
+save.image("global.RData")
+save.image("../demo/global.RData")

@@ -8,8 +8,6 @@ update_vac_char <- function(para,
                             waning_vac = 52*7,
                             ve = c(rep(0.7,10),rep(0.5,6))){
   
-  require(covidm)
-  
   # check input ve parameters
   n_age <- length(para$pop[[1]]$size)
   if(length(ve) != 1 & length(ve) != n_age) stop("VE input is not of correct dimension.")

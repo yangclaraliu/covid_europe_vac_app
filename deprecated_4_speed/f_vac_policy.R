@@ -17,6 +17,7 @@ vac_policy <- function(para,
                                     5,  5,  5,  5,
                                     5,  5,  5,  5,
                                     4,  3,  2,  1),
+                       date_start = date_start,
                        cov_max = 0.7 # maximum coverage objective in each population
                        
 ){
@@ -182,6 +183,11 @@ vac_policy <- function(para,
     mode = "assign",
     values = vacc_vals,
     times = vacc_times)
+  
+  daily_vac %<>% 
+    mutate(doses_daily = supply,
+           supply = cumsum(supply),
+           date = as.Date(date_start) + as.numeric(t))
   
   return(list(param = para, 
               supply = tmp_schedule,
