@@ -7,14 +7,14 @@
 vac_policy_preload <- function(para,
                                pattern_tmp = "linear",
                                priority_tmp = NULL,
-                               cov_max = 0.7 # maximum coverage objective in each population
+                               cov_max = NULL # maximum coverage objective in each population
                                
 ){
   # debug
   # pattern_tmp = "linear"
-  # cov_max = 0.7
-# priority_tmp <- priority_policy[[4]]
-  
+  # cov_max = 0.5
+  # priority_tmp <- priority_policy[[4]]
+
   # details of the vaccine rollout schedules
   vac_progress %>% 
     mutate(date = seq(as.Date("2021-01-01"),
@@ -98,7 +98,7 @@ vac_policy_preload <- function(para,
     # vaccines available
     if(!is.na(date_marker[i]) & !is.na((date_marker[i+1] - 1))){
       supply_tmp <-  daily_vac[date_marker[i]:(date_marker[i+1] - 1), 
-                               "supply"] %>% as.matrix()
+                               "doses_daily"] %>% as.matrix()
       # weights assigned to each age group, aligned
       # transposed for matrix multiplication purpose only
       weights_tmp <- matrix(tmp_pop$n_pop[tmp_priorities[[i]]$age_group]/
@@ -106,7 +106,7 @@ vac_policy_preload <- function(para,
         t
       
       daily_vac[date_marker[i]:(date_marker[i+1] - 1), 
-                tmp_priorities[[i]]$age_group + 1] <- 
+                tmp_priorities[[i]]$age_group + 2] <- 
         # daily_vac[date_marker[i]:(date_marker[i+1] - 1), "supply"]/length(tmp_priorities[[i]]$age_group)
         supply_tmp %*% weights_tmp
     }
@@ -136,6 +136,7 @@ vac_policy_preload <- function(para,
     values = vacc_vals,
     times = vacc_times)
   
+    
   return(list(param = para, 
               supply = tmp_schedule_preload,
               vac_para = vac_para,

@@ -1,7 +1,7 @@
 predict_deriv <- function(
                           cn, # country name
                           # S_A, # size of seasonal component
-                          cov_tar = 0.8, # target coverage  
+                          cov_tar = NULL, # target coverage  
                           type_ms = "Preload",
                           pattern_label = NULL,
                           ms_date = NULL, # milestone - dates
@@ -17,7 +17,7 @@ predict_deriv <- function(
   # debugging
   # cn = "Belgium"                  # country name
   # S_A = 0.2                       # size of seasonal component
-  # cov_tar = 0.8                   # target coverage
+  # cov_tar = 0.5                   # target coverage
   # ms_date <- c("2021-01-01",
   #              "2021-06-30",
   #              "2021-12-31",
@@ -30,6 +30,8 @@ predict_deriv <- function(
   # wane = c(45, 1)
   # R = 2.7
   # pattern = "linear"
+  # type_ms = "Preload"
+
   pattern <-   case_when(pattern_label == "Linear Increase" ~ "linear",
                          pattern_label == "Exponential Increase" ~ "exponential",
                          pattern_label == "Sigmoid Increase" ~ "sigmoid")
@@ -59,8 +61,6 @@ predict_deriv <- function(
                     waning_vac = wane[2]*365,
                     ve = eff) -> params_baseline
   
-  
-  # do not run during debug
   if(type_ms == "Customised"){
     ms_date <- ms_date %>% 
       .[!is.na(.)] %>% 

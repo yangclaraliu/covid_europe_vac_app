@@ -164,19 +164,18 @@ server <- function(input, output, session) {
            x = "Date") 
   })
   
-  #### renderplot for daily_vac ####
+  #### renderplot for daily_vac by age ####
   output$daily_vac <- renderPlot({
-    dataInput()[["daily_vac"]] %>% 
-      mutate(date =   dataInput()[["supply"]]$milestone_date[1] + as.numeric(t)) %>% 
-      dplyr::select(-t, -supply) %>%
+    dataInput()[["main"]] %>% 
+    # main %>%   
+      dplyr::select(date, policy, starts_with("Y", ignore.case = F)) %>% 
       group_by(policy) %>% group_split() %>% 
-      map(mutate_at, vars(starts_with("Y")), cumsum) %>% 
+      map(mutate_at, vars(starts_with("Y", ignore.case = F)),
+          cumsum) %>%
       bind_rows() %>% 
-      # mutate_at(vars(starts_with("Y")), cumsum) %>% 
       pivot_longer(cols = starts_with("Y")) %>% 
-      # filter(value > 0) %>% 
       left_join(data.frame(name = paste0("Y",1:16),
-                           pop = dataInput()[["size"]]),# params$param$pop[[1]]$size),
+                           pop = dataInput()[["size"]]),
                 by = "name") %>%
       mutate(p = value/pop,
              name = factor(name,
