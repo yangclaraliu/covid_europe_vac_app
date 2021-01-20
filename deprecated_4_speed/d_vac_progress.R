@@ -2,7 +2,7 @@ require(bsts)
 require(e1071)
 require(magrittr)
 
-t <- 365*2 # start vaccinating from 2021-01-01
+t <- 365 # start vaccinating from 2021-01-01, reaching objective on 2021-12-31
 obj <- 0.5
 
 vac_progress <- list()
@@ -19,7 +19,7 @@ vac_progress <- list()
 } 
 
 # test vac_linear
- vac_linear(0.5, 365*2) -> vac_progress[["linear"]]
+ vac_linear(0.5, t) -> vac_progress[["linear"]]
  
  # exponential vaccination
  f <- function(r){

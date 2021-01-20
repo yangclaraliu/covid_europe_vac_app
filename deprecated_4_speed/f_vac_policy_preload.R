@@ -7,28 +7,25 @@
 vac_policy_preload <- function(para,
                                pattern_tmp = "linear",
                                priority_tmp = NULL,
-                               cov_max = NULL # maximum coverage objective in each population
-                               
+                               cov_max = NULL
 ){
   # debug
+  # para <- gen_country_basics("Belgium") %>% update_vac_char()
   # pattern_tmp = "linear"
-  # cov_max = 0.5
+  # cov_max = 0.7
   # priority_tmp <- priority_policy[[4]]
 
   # details of the vaccine rollout schedules
-  vac_progress %>% 
+  vac_progress[, ..pattern_tmp] %>% 
+    setNames("value") %>% 
     mutate(date = seq(as.Date("2021-01-01"),
-                      as.Date("2022-12-31"),
+                      as.Date("2021-12-31"),
+                      # as.Date("2022-12-31"),
                       1),
-           pop = sum(para$pop[[1]]$size)) %>% 
-    pivot_longer(cols = c("linear", "exponential", "sigmoid"),
-                 names_to = "pattern") %>% 
-    group_by(pattern) %>% group_split() %>%
-    map(mutate, doses_daily = pop*value) %>% 
-    map(mutate, cov = cumsum(value)) %>% 
-    map(mutate, doses = cumsum(doses_daily)) %>% 
-    bind_rows() %>% 
-    filter(pattern == pattern_tmp) -> tmp_schedule_preload
+           pop = sum(para$pop[[1]]$size),
+           doses_daily = pop * value,
+           cov = cumsum(value),
+           doses = cumsum(doses_daily)) -> tmp_schedule_preload
   
   # details of the target population
   tmp_pop <- data.frame(n_pop = para$pop[[1]]$size) %>% 
@@ -61,6 +58,7 @@ vac_policy_preload <- function(para,
   # create empty grid to score vaccination plans
   seq(lubridate::ymd(para$date0),
       lubridate::ymd("2022-12-31"),
+      # lubridate::ymd("2021-12-31"),
       1) %>%
     enframe(value = "date") %>%
     bind_cols(matrix(0,
@@ -70,8 +68,9 @@ vac_policy_preload <- function(para,
                 setNames(paste0("Y",1:16))
     )  %>% 
     left_join(tmp_schedule_preload, by = "date") %>% 
-    mutate(pattern = zoo::na.locf(pattern, fromLast = T),
-           pop = zoo::na.locf(pop, fromLast = T)) %>% 
+    mutate(pop = mean(pop, na.rm = T)) %>% 
+    # mutate(pattern = zoo::na.locf(pattern, fromLast = T),
+    #        pop = zoo::na.locf(pop, fromLast = T)) %>% 
     replace(., is.na(.), 0) %>% 
     mutate(supply = cumsum(doses_daily)) -> daily_vac
   
@@ -112,10 +111,40 @@ vac_policy_preload <- function(para,
     }
   }
   
-  # putting all vaccine policy related raw parameters back together
+  # number going into revaccination
+  # re-vacciantion starts as soon as an age group is done vaccination
+  daily_vac %>% 
+    dplyr::select(starts_with("Y", ignore.case = F)) %>%
+    mutate_at(vars(paste0("Y",1:16)), cumsum) %>% 
+    apply(., 2, max) %>% 
+    "*"(para$pop[[1]]$wv) -> n_revac
+  
+  daily_vac %>% 
+    dplyr::select(starts_with("Y", ignore.case = F)) %>% 
+    apply(., 2, which.max) %>% 
+    "+"(1)-> start_revac
+
+  for(i in 1:16){
+    daily_vac[(start_revac[i]:nrow(daily_vac)),paste0("Y",i)] <- n_revac[i]
+  }
+  
+  daily_vac[(which.max(daily_vac$cov)+1):nrow(daily_vac),"cov"] <-
+    max(daily_vac$cov)
+  
+  daily_vac %<>% 
+    mutate(doses_daily =rowSums(.[grep("Y[1-9]", names(.))]),
+           doses = cumsum(doses_daily),
+           supply = cumsum(doses_daily)) # %>%
+    # filter(doses_daily <= 7500 & date >= "2021-03-15") %>% View()
+    # filter(date <= "2021-09-01" & date >= "2021-05-01") %>% View()
+    # ggplot(., aes(x = date, y = doses_daily)) +
+    # geom_line()
+    # 
+   # putting all vaccine policy related raw parameters back together
   daily_vac %>% 
     group_by_at(vars(starts_with("Y"))) %>% 
-    summarise(t = min(t)) %>% 
+    summarise(t = min(t),
+              .groups = "drop") %>% 
     ungroup() -> vac_para
   
   # then convert these parameters to a format that's friendly with `covidm`
@@ -136,7 +165,6 @@ vac_policy_preload <- function(para,
     values = vacc_vals,
     times = vacc_times)
   
-    
   return(list(param = para, 
               supply = tmp_schedule_preload,
               vac_para = vac_para,

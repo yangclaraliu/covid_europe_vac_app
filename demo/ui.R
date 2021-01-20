@@ -54,7 +54,7 @@ ui <- fluidPage(
            sliderInput("waning_vac", 
                         "Waning of Vaccine Induced Immunity (Year)", 
                         value = 1, 
-                        min = 0.5, max = 2, step = 0.5),
+                        min = 0.5, max = 10, step = 0.5),
            #### Input = max_cov #### 
            sliderInput("max_cov", 
                         "Maximum Vaccination Uptake", 

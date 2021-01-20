@@ -148,7 +148,8 @@ server <- function(input, output, session) {
                              "Total Vaccine Doses Available"))) %>% 
       ggplot(., aes(x = date,
                     y = value)) +
-      geom_point() +
+      # geom_point() +
+      geom_line(size = 1.5) +
       scale_alpha_manual(values = c(1,0)) +
       theme_bw() +
       theme(legend.position = "bottom",
