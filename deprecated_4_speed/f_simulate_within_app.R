@@ -17,7 +17,7 @@ predict_deriv <- function(
   # debugging
   # cn = "Belgium"                  # country name
   # S_A = 0.2                       # size of seasonal component
-  # cov_tar = 0.5                   # target coverage
+  # cov_tar = 0.8                   # target coverage
   # ms_date <- c("2021-01-01",
   #              "2021-06-30",
   #              "2021-12-31",

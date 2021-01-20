@@ -56,7 +56,8 @@ vac_policy <- function(para,
                                                NA)) %>% 
     group_by(milestone_date) %>% 
     summarise(milestone_cov = mean(milestone_cov, 
-                                   na.rm = T)) %>% 
+                                   na.rm = T),
+              .groups = "drop") %>% 
     ungroup %>% 
     mutate(milestone_date = lubridate::ymd(milestone_date),
            t = milestone_date - as.Date(para$date0),
@@ -163,7 +164,8 @@ vac_policy <- function(para,
   # putting all vaccine policy related raw parameters back together
   daily_vac %>% 
     group_by_at(vars(starts_with("Y"))) %>% 
-    summarise(t = min(t)) %>% 
+    dplyr::summarise(t = min(t),
+              .groups = "drop") %>% 
     ungroup() -> vac_para
   
   # then convert these parameters to a format that's friendly with `covidm`

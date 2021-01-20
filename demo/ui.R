@@ -64,13 +64,16 @@ ui <- fluidPage(
     column(8,
            h3("Vaccine Strategy Set Up"),
            h4("Priority Setting"),
-           HTML(paste0(p("Strategy 1: All Adults"),
-                       "</p>",
-                       p("Strategy 2: All 60+, then all younger adults"),
-                       "</p>",
-                       p("Strategy 3: All younger adults, then all elderly"),
-                       "</p>",
-                       p("Strategy 4: From the oldest to the youngest adults"))),
+           HTML(paste0(
+             p("Strategy 0: No vaccine deployed"),
+             "</p>",
+             p("Strategy 1: All Adults"),
+             "</p>",
+             p("Strategy 2: All 60+, then all younger adults"),
+             "</p>",
+             p("Strategy 3: All younger adults, then all elderly"),
+             "</p>",
+             p("Strategy 4: From the oldest to the youngest adults"))),
            #### Input = n_ms #### 
            selectInput(
              inputId = "type_ms",

@@ -151,7 +151,7 @@ server <- function(input, output, session) {
       geom_point() +
       scale_alpha_manual(values = c(1,0)) +
       theme_bw() +
-      theme(legend.position = "none",
+      theme(legend.position = "bottom",
             title = element_text(size = 24),
             strip.text = element_text(size = 20),
             axis.text = element_text(size = 20),
@@ -169,6 +169,7 @@ server <- function(input, output, session) {
     dataInput()[["main"]] %>% 
     # main %>%   
       dplyr::select(date, policy, starts_with("Y", ignore.case = F)) %>% 
+      replace(., is.na(.), 0) %>% 
       group_by(policy) %>% group_split() %>% 
       map(mutate_at, vars(starts_with("Y", ignore.case = F)),
           cumsum) %>%
@@ -176,6 +177,7 @@ server <- function(input, output, session) {
       pivot_longer(cols = starts_with("Y")) %>% 
       left_join(data.frame(name = paste0("Y",1:16),
                            pop = dataInput()[["size"]]),
+                           # pop = r[["size"]]),
                 by = "name") %>%
       mutate(p = value/pop,
              name = factor(name,
@@ -188,15 +190,15 @@ server <- function(input, output, session) {
                     y = p,
                     color = policy,
                     group = interaction(name, policy))) +
-      # geom_point() +
       geom_line() +
       facet_wrap(~name) +
       theme_bw() +
       theme(legend.position = "bottom",
-            title = element_text(size = 20),
-            strip.text = element_text(size = 16),
-            axis.title = element_text(size = 16),
-            axis.text.x = element_text(angle = 90)) + 
+            title = element_text(size = 24),
+            strip.text = element_text(size = 20),
+            axis.text = element_text(size = 20),
+            axis.text.x = element_text(angle = 90),
+            axis.title = element_text(size = 20)) +
       labs(x = "Date",
            y = "Coverage",
            color = "Strategy",
@@ -207,35 +209,44 @@ server <- function(input, output, session) {
   
   #### renderPlot for Public Health Outcomes ####
   output$pho <- renderPlot({
-    dataInput()[["dynamics"]] %>% 
-      filter(compartment %in% c("death_o", "cases")) %>%
-      full_join(dataInput()[["dynamics_baseline"]] %>% 
-                  filter(compartment %in% c("death_o", "cases")),
-                by = c("t", "group", "compartment","population", "run")) %>% 
-      pivot_longer(starts_with("value")) %>% 
-      mutate(policy = if_else(name == "value.y", "0", policy)) %>%
-      distinct %>% dplyr::select(-name) %>% 
-      group_by(policy, t, compartment, run, population) %>% 
-      summarise(value = sum(value), .groups = "drop") %>% 
-      group_by(policy, compartment) %>% group_split() %>% 
-      map(arrange, t) %>% 
-      map(mutate, value_cum = cumsum(value)) %>% 
+    dataInput()[["main"]] %>% 
+      # main %>% 
+      dplyr::select(date, policy, death_o, cases, supply) %>% 
+      pivot_longer(cols = c("death_o", "cases")) %>% 
+      # filter(supply > 0) %>% 
+      # mutate(value = if_else(is.na(value), 0, value)) %>% 
+      # filter(compartment %in% c("death_o", "cases")) %>%
+      # pivot_longer(starts_with("value")) %>% 
+      # mutate(policy = if_else(name == "value.y", "0", policy)) %>%
+      # distinct %>% dplyr::select(-name) %>% 
+      # group_by(policy, t, compartment, run, population) %>% 
+      # summarise(value = sum(value), .groups = "drop") %>% 
+      group_by(policy, name) %>% group_split() %>%
+      map(arrange, t) %>%
+      map(mutate, value_cum = cumsum(value)) %>%
       bind_rows() %>% 
-      pivot_longer(starts_with("value")) %>% 
-      mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
+      pivot_longer(cols = c(value, value_cum),
+                   names_to = "metric",
+                   values_to = "value") %>% 
+      # mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
+      filter(date >= "2021-01-01") %>% 
       ggplot(., aes(x = date,
                     y = value,
                     group = policy,
                     color = policy)) +
-      geom_line(size = 1.5) +
-      facet_wrap(~interaction(compartment, name), scale = "free")+
+      geom_line(size = 1.5, alpha = 0.8) +
+      # geom_line(aes(x = date, y = supply))
+      facet_wrap(~interaction(name, metric),
+                 ncol = 2,
+                 scale = "free") +
       theme_bw() +
       theme(legend.position = "bottom",
-            title = element_text(size = 20),
-            strip.text = element_text(size = 16),
-            legend.text = element_text(size = 16),
-            axis.title = element_text(size = 16)) +
-      ggsci::scale_color_lancet() +
+            title = element_text(size = 24),
+            strip.text = element_text(size = 20),
+            axis.text = element_text(size = 20), 
+            axis.text.x = element_text(angle = 90),
+            axis.title = element_text(size = 20)) +
+      ggsci::scale_color_futurama() +
       labs(x = "Date",
            y = "",
            color = "Strategy",
@@ -265,7 +276,7 @@ server <- function(input, output, session) {
                     color = policy,
                     fill = policy)) +
       geom_bar(stat = "identity") +
-      facet_wrap(~var) +
+      facet_wrap(~var, scale =  "free") +
       ggsci::scale_color_lancet() +
       ggsci::scale_fill_lancet() +
       theme_bw() +
