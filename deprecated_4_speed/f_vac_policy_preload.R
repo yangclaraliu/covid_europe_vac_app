@@ -10,7 +10,7 @@ vac_policy_preload <- function(para,
                                cov_max = NULL
 ){
   # debug
-  # para <- gen_country_basics("Belgium") %>% update_vac_char()
+  # para <- gen_country_basics("Belgium") %>% update_vac_char(ve_i = 0.9, ve_d = 0)
   # pattern_tmp = "linear"
   # cov_max = 0.7
   # priority_tmp <- priority_policy[[4]]
@@ -139,24 +139,25 @@ vac_policy_preload <- function(para,
     # filter(date <= "2021-09-01" & date >= "2021-05-01") %>% View()
     # ggplot(., aes(x = date, y = doses_daily)) +
     # geom_line()
-    # 
+  
    # putting all vaccine policy related raw parameters back together
-  daily_vac %>% 
-    group_by_at(vars(starts_with("Y"))) %>% 
-    summarise(t = min(t),
-              .groups = "drop") %>% 
-    ungroup() -> vac_para
+  # daily_vac %>% 
+  #   group_by_at(vars(starts_with("Y"))) %>% 
+  #   summarise(t = min(t),
+  #             .groups = "drop") %>% 
+  #   ungroup() -> vac_para
   
   # then convert these parameters to a format that's friendly with `covidm`
   # allocation
-  vac_para %>% 
+  daily_vac %>% 
+    filter(date >= "2020-12-31") %>% 
     dplyr::select(starts_with("Y")) %>% 
-    split(seq(nrow(vac_para))) %>% 
+    split(seq(nrow(.))) %>% 
     map(unlist) %>% 
     map(as.vector) -> vacc_vals
   
   # timing
-  vacc_times <- vac_para$t %>% as.numeric; vacc_times[1] <- 0
+  vacc_times <- c(0, daily_vac %>% filter(doses_daily>0) %>% pull(name))
   
   para$schedule[["vaccination"]] = list(
     parameter = "v",
@@ -167,6 +168,6 @@ vac_policy_preload <- function(para,
   
   return(list(param = para, 
               supply = tmp_schedule_preload,
-              vac_para = vac_para,
+              # vac_para = vac_para,
               daily_vac = daily_vac))
   }

@@ -21,10 +21,10 @@ vac_policy <- function(para,
                        cov_max = 0.7 # maximum coverage objective in each population
                        
 ){
-  require(magrittr)
+  # require(magrittr)
   
   #### variables for debugging ####
-  # para <- gen_country_basics("Belgium") %>% update_vac_char()
+  # para <- gen_country_basics("Belgium") %>% update_vac_char(ve_i = 0.9, ve_d = 0)
   # milestone_date = c("2021-01-01", # start from 0
   #                    "2021-06-01", # 0.03
   #                    "2021-12-31", # all population; 0.2
@@ -38,7 +38,7 @@ vac_policy <- function(para,
   #              5,  5,  5,  5,
   #              4,  3,  2,  1)
   # cov_max = 0.7
-  ########
+  # #######
   
   
   # error messages RE: parameters

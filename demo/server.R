@@ -43,7 +43,7 @@ server <- function(input, output, session) {
                            "Sigmoid Increase"),
                selected = "Linear Increase"
              ),
-             helpText("Overall vaccine coverage is assumed to reach 50% on 2022-12-31.")
+             helpText("Overall vaccine coverage is assumed to reach 50% on 2021-12-31. Additional revaccination programs are included to keep population level stablised at 50% level while accounting for waning immunity.")
            ),
            "Customised" = list(numericInput(
              inputId = "n_ms",
@@ -55,11 +55,11 @@ server <- function(input, output, session) {
            ),
            # actionButton("refresh", "Update Milestones"),
            fluidRow(
-             column(4,
+             column(3,
                     h4("Vaccination Progress Milestones"),
                     uiOutput("ms_dates")
                     ),
-             column(4,
+             column(3,
                     h4("Vaccination Coverage Milestones"),
                     uiOutput("ms_covs"),
                     br(),
@@ -75,6 +75,8 @@ server <- function(input, output, session) {
                     inputId = "date_start",
                     value = model_selected[model_selected$WB == cn_label,
                                            "start_date"]  %>% 
+                      unlist %>% 
+                      min %>% 
                       as.numeric %>% 
                       as.Date(., origin = "1970-01-01") %>% 
                       as.character) 
@@ -121,7 +123,8 @@ server <- function(input, output, session) {
                 # input$cov5),
       # priority strategy selected
       date_start = input$date_start,
-      eff = rep(input$ve, 16),
+      ve_i = input$ve_i,
+      ve_d = input$ve_d,
       # c(natural immunity duration, vaccine induced immunity duration)
       wane = c(input$waning_nat, input$waning_vac),
       # basic reproduction number 
@@ -137,7 +140,7 @@ server <- function(input, output, session) {
   #### supply plot ####
   output$supply <- renderPlot({
    dataInput()[["main"]]%>% 
-   #  main %>%
+   # main %>%
       dplyr::filter(policy == 1) %>% 
       dplyr::select(date, doses_daily, supply) %>%
       pivot_longer(cols = c(doses_daily, supply)) %>% 
@@ -171,7 +174,7 @@ server <- function(input, output, session) {
     # main %>%   
       dplyr::select(date, policy, starts_with("Y", ignore.case = F)) %>% 
       replace(., is.na(.), 0) %>% 
-      group_by(policy) %>% group_split() %>% 
+      group_by(policy) %>% group_split() %>% map(arrange, date) %>% 
       map(mutate_at, vars(starts_with("Y", ignore.case = F)),
           cumsum) %>%
       bind_rows() %>% 
@@ -180,15 +183,14 @@ server <- function(input, output, session) {
                            pop = dataInput()[["size"]]),
                            # pop = r[["size"]]),
                 by = "name") %>%
-      mutate(p = value/pop,
-             name = factor(name,
+      mutate(name = factor(name,
                            levels = paste0("Y",1:16),
                            labels = c(paste0(seq(0,74,5),
                                              "-",
                                              seq(4,74,5)),
-                                      "75+"))) %>%
+                                      "75+"))) %>% 
       ggplot(., aes(x = date,
-                    y = p,
+                    y = value,
                     color = policy,
                     group = interaction(name, policy))) +
       geom_line() +
@@ -201,10 +203,11 @@ server <- function(input, output, session) {
             axis.text.x = element_text(angle = 90),
             axis.title = element_text(size = 20)) +
       labs(x = "Date",
-           y = "Coverage",
+           y = "Vaccines Allocated",
            color = "Strategy",
-           title = "Age Specific Vaccination Progress") +
-      ggsci::scale_color_lancet()
+           title = "Age Specific Vaccines Allocated") +
+      ggsci::scale_color_lancet() +
+      scale_y_continuous(labels = scientific_format())
   })
   
   
@@ -255,36 +258,43 @@ server <- function(input, output, session) {
   })
   
   output$econ <- renderPlot({
-    dataInput()[["econ"]]  %>% 
-      separate(name, into = c("tag", "var","unit")) %>% 
+    # dataInput()[["econ"]]  %>% 
+    econ %>% 
+      separate(variable, into = c("tag", "unit")) %>% 
       mutate(unit = if_else(is.na(unit), 
-                            "Overall Loss Reduction", 
+                            "Overall Loss", 
                             "Per-dose Loss Reduction")) %>%
-      mutate(var = factor(var,
+      mutate(var = factor(tag,
                           levels = c("LE", "adjLE", "adjQALEdisc",
-                                     "VSLmlns", "QALYcases", "QALYloss"),
+                                     "VSLmlns", "QALYcases", "QALYloss",
+                                     "doses"),
                           labels = c("Life Expectancy",
                                      "Comorbidity-adjusted Life Expectancy",
                                      "Quality-adjusted Life Expectancy",
                                      "VSL (mln. USD)",
                                      "Morbidity-related QALY",
-                                     "Total QALY (AEFI + morbidity + mortality)")),
+                                     "Total QALY (AEFI + morbidity + mortality)",
+                                     "Doses")),
              policy = parse_number(policy),
              policy = factor(policy,
                              levels = c(0:4))) %>% 
+      filter(var != "Doses") %>% 
       ggplot(., aes(x = policy, 
                     y = value,
                     color = policy,
                     fill = policy)) +
       geom_bar(stat = "identity") +
-      facet_wrap(~var, scale =  "free") +
-      ggsci::scale_color_lancet() +
-      ggsci::scale_fill_lancet() +
+      # geom_point() +
+      facet_wrap(var~unit, scale =  "free") +
+      ggsci::scale_color_futurama() +
+      ggsci::scale_fill_futurama() +
       theme_bw() +
       theme(legend.position = "bottom",
-            title = element_text(size = 20),
-            strip.text = element_text(size = 16),
-            legend.text = element_text(size = 16),
-            axis.title = element_text(size = 16))
+            title = element_text(size = 24),
+            strip.text = element_text(size = 18),
+            legend.text = element_text(size = 18),
+            axis.text = element_text(size = 18),
+            axis.title = element_text(size = 18)) +
+      labs(color = "", x = "Strategy", fill = "", y = "")
   })
 }
