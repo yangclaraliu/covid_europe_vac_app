@@ -7,6 +7,7 @@ library(magrittr)
 library(data.table)
 library(shinyjs)
 library(scales)
+library(shinyWidgets)
 # library(ggsflabel)
 # library(mgcv)
 # library(pspline)
@@ -18,7 +19,9 @@ library(scales)
 # cm_version = 2
 load("global.RData")
 source(paste0(cm_path, "/R/covidm.R"))
-
+flags = sapply(c(members$country_name), function(i) paste0("https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/",
+                                                           tolower(countrycode::countrycode(i, "country.name", "iso2c")),
+                                                           ".svg"))
 # HTML(paste0(p("Strategy 1: All Adults"),
 #             "</p>",
 #             p("Strategy 2: All 60+, then all younger adults"),

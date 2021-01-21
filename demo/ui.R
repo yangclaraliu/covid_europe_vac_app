@@ -31,12 +31,24 @@ ui <- fluidPage(
              ))),
     column(3,
            #### Input = cn ####
-           selectInput(
-             "cn",
-             "Choose a country:",
-             selected = "Albania",
-             list(`countries` = as.list(members$country_name))
-           ),
+           pickerInput("cn", "cn", multiple = F,
+                       label = "Choose a country:",
+                       selected = "Albania",
+                       choices = as.list(members$country_name),
+                       
+                       choicesOpt = list(content =  
+                                           mapply(c(members$country_name), 
+                                                  flags, 
+                                                  FUN = function(country, flagUrl) {
+                                             HTML(paste(
+                                               tags$img(src=flagUrl, 
+                                                        width=20, 
+                                                        height=15),
+                                               country
+                                             ))
+                                           }, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+                                         
+                       )),
            a(id = "toggleEpi",
              "Show/Hide Epidemic Parameters",
              href = "#"),
