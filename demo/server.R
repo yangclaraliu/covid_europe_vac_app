@@ -82,12 +82,39 @@ server <- function(input, output, session) {
                       as.character) 
   })
   
+  # control panel for epidemic parameters
   observe({
     shinyjs::onclick("toggleEpi",
                      shinyjs::toggle(id = "Epi", anim = T))
   })
   
+  # update map when a new location is chosen
+  observe({
+    # Choose location
+    locations = input$cn
+    wb = members[members$country_name == input$cn, "wb"]
+    lat = wp_reg[id == wb, lat];
+    lon = wp_reg[id == wb, lon];
+    size = wp_reg[id == wb, sqrt(area)];
+    
+    # Update map
+    leafletProxy("loc_map") %>%
+      clearMarkers() %>%
+      addCircleMarkers(lat = lat, 
+                       lng = lon, 
+                       color = "#aa0000", 
+                       stroke = F, 
+                       radius = 6, 
+                       fillOpacity = 0.8) %>%
+      flyTo(lat = lat, 
+            lng = lon, 
+            zoom = (8000 - size) / 1500 + 
+              ((sum(locations != "0") - 1) * 1.5))
+  })
   
+  
+  # obtain all the results so don't need to refer to them individually each 
+  # time.
   dataInput <- eventReactive(input$update, {
     predict_deriv(
       # country name
@@ -296,5 +323,10 @@ server <- function(input, output, session) {
             axis.text = element_text(size = 18),
             axis.title = element_text(size = 18)) +
       labs(color = "", x = "Strategy", fill = "", y = "")
+  })
+  #### loc_map ####
+  output$loc_map = renderLeaflet({
+    leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+      addProviderTiles(providers$Stamen.TonerLite)
   })
 }

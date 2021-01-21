@@ -30,12 +30,14 @@ ui <- fluidPage(
              
              ))),
     column(3,
+           leafletOutput("loc_map", width = "100%", height = "300px"),
            #### Input = cn ####
-           pickerInput("cn", "cn", multiple = F,
+           pickerInput("cn", 
+                       "cn", 
+                       multiple = F,
                        label = "Choose a country:",
                        selected = "Albania",
                        choices = as.list(members$country_name),
-                       
                        choicesOpt = list(content =  
                                            mapply(c(members$country_name), 
                                                   flags, 
@@ -49,6 +51,7 @@ ui <- fluidPage(
                                            }, SIMPLIFY = FALSE, USE.NAMES = FALSE)
                                          
                        )),
+
            a(id = "toggleEpi",
              "Show/Hide Epidemic Parameters",
              href = "#"),

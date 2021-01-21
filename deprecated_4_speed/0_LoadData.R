@@ -32,6 +32,12 @@ suppressWarnings(
     filter(wb %in% members$wb)
 )
 
+# st_centroid(members_shp) %>% 
+#   as.data.frame() %>% 
+#   mutate(geometry = as.character(geometry)) %>% 
+#   separate(geometry, into = c("lon", "lat"), sep = ",") %>% 
+#   mutate(lon = parse_number(lon),
+#          lat = parse_number(lat))
 
 #  age-dependent ratio of infection:cases (based on Davies et al, Nature paper)
 cf <- c(0.2904047, 0.2904047, 0.2070468, 0.2070468, 0.2676134, 
@@ -433,5 +439,23 @@ priority_policy[["p4"]]  <- c(rep(NA, 4), rep(5, 8), 4, 3, 2, 1)
 source("f_gen_econ_within_app.R")
 source("f_simulate_within_app.R")
 source("d_vac_progress.R")
+flags = sapply(c(members$country_name), function(i) {
+  paste0("https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/",
+         tolower(countrycode::countrycode(i, "country.name", "iso2c")),
+                                                           ".svg")
+  }
+)
+
+# get lon and lat and area
+wp_reg = qread("worldpop5yr.qs");
+wp_reg[, tot_pop := rowSums(.SD), .SDcols = f_0:m_80] # Calculate total population
+wp_reg = wp_reg[!is.na(lon) & !is.na(lat)] %>% 
+  filter(type == "Country") %>% 
+  # mutate(wb = countrycode::countrycode(name, "country.name", "wb")) %>% 
+  filter(id %in% members$wb)
+
+
+# Restrict to regions with a lon and lat; this removes places with 0 population as well.
+
 save.image("global.RData")
 save.image("../demo/global.RData")
