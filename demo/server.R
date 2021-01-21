@@ -215,7 +215,10 @@ server <- function(input, output, session) {
                            labels = c(paste0(seq(0,74,5),
                                              "-",
                                              seq(4,74,5)),
-                                      "75+"))) %>% 
+                                      "75+")),
+             policy = factor(policy,
+                             levels = 0:4,
+                             labels = c("V-","V+","V60","V20","V75"))) %>% 
       ggplot(., aes(x = date,
                     y = value,
                     color = policy,
@@ -224,6 +227,7 @@ server <- function(input, output, session) {
       facet_wrap(~name) +
       theme_bw() +
       theme(legend.position = "bottom",
+            legend.text = element_text(size = 20),
             title = element_text(size = 24),
             strip.text = element_text(size = 20),
             axis.text = element_text(size = 20),
@@ -233,7 +237,7 @@ server <- function(input, output, session) {
            y = "Vaccines Allocated",
            color = "Strategy",
            title = "Age Specific Vaccines Allocated") +
-      ggsci::scale_color_lancet() +
+      ggsci::scale_color_futurama() +
       scale_y_continuous(labels = scientific_format())
   })
   
@@ -268,7 +272,10 @@ server <- function(input, output, session) {
                           labels = c("Daily Incidence",
                                      "Cumulative Incidence",
                                      "Daily Deaths",
-                                     "Cumullative Daily"))) %>% 
+                                     "Cumullative Daily")),
+             policy = factor(policy,
+                             levels = 0:4,
+                             labels = c("V-","V+","V60","V20","V75"))) %>% 
       # mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
       filter(date >= "2021-01-01") %>% 
       ggplot(., aes(x = date,
@@ -282,6 +289,7 @@ server <- function(input, output, session) {
                  scale = "free") +
       theme_bw() +
       theme(legend.position = "bottom",
+            legend.text = element_text(size = 20),
             title = element_text(size = 24),
             strip.text = element_text(size = 20),
             axis.text = element_text(size = 20), 
@@ -314,7 +322,8 @@ server <- function(input, output, session) {
                                      "Doses")),
              policy = parse_number(policy),
              policy = factor(policy,
-                             levels = c(0:4))) %>% 
+                             levels = c(0:4),
+                             labels = c("V-","V+","V60","V20","V75"))) %>% 
       filter(var != "Doses") %>% 
       ggplot(., aes(x = policy, 
                     y = value,
@@ -327,6 +336,7 @@ server <- function(input, output, session) {
       ggsci::scale_fill_futurama() +
       theme_bw() +
       theme(legend.position = "bottom",
+            legend.text = element_text(size = 20),
             title = element_text(size = 24),
             strip.text = element_text(size = 18),
             legend.text = element_text(size = 18),

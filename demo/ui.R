@@ -107,15 +107,15 @@ ui <- fluidPage(
            h3("Vaccine Strategy Set Up"),
            h4("Priority Setting"),
            HTML(paste0(
-             p("Strategy 0: No vaccine deployed"),
+             p("Strategy V-: No vaccine deployed"),
              "</p>",
-             p("Strategy 1: All Adults"),
+             p("Strategy V+: The entire adult population will start vaccination simultaneously."),
              "</p>",
-             p("Strategy 2: All 60+, then all younger adults"),
+             p("Strategy V60: Those 60+ years old will start vaccinate first, then all other adults (i.e., 20-59 yo)."),
              "</p>",
-             p("Strategy 3: All younger adults, then all elderly"),
+             p("Strategy V20: Those between 20 and 59 years old will start vaccinate first, then all other adults (i.e., 60+)."),
              "</p>",
-             p("Strategy 4: From the oldest to the youngest adults"))),
+             p("Strategy V75: Starting from the oldest age group, moving towards younger elderlies. When vaccination among elderlies are completed, start vaccinating those between 20-59 simultaneously."))),
            #### Input = n_ms #### 
            selectInput(
              inputId = "type_ms",
