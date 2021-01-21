@@ -3,7 +3,7 @@
 .RData
 .Ruserdata
 
-/demo/global.RData
+*.RData
 *.csv
 *.rds
 *.rda
