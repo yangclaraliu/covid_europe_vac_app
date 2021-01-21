@@ -258,7 +258,17 @@ server <- function(input, output, session) {
       bind_rows() %>% 
       pivot_longer(cols = c(value, value_cum),
                    names_to = "metric",
-                   values_to = "value") %>% 
+                   values_to = "value") %>%
+      mutate(cat = paste(name, metric, sep = "-"),
+             cat = factor(cat,
+                          levels = c("cases-value",
+                                     "cases-value_cum",
+                                     "death_o-value",
+                                     "death_o-value_cum"),
+                          labels = c("Daily Incidence",
+                                     "Cumulative Incidence",
+                                     "Daily Deaths",
+                                     "Cumullative Daily"))) %>% 
       # mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
       filter(date >= "2021-01-01") %>% 
       ggplot(., aes(x = date,
@@ -267,7 +277,7 @@ server <- function(input, output, session) {
                     color = policy)) +
       geom_line(size = 1.5, alpha = 0.8) +
       # geom_line(aes(x = date, y = supply))
-      facet_wrap(~interaction(name, metric),
+      facet_wrap(~ cat,
                  ncol = 2,
                  scale = "free") +
       theme_bw() +
