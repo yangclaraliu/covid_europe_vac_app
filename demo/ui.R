@@ -4,7 +4,7 @@ ui <- fluidPage(
   shinyjs::inlineCSS(list(.big = "font-size: 2em")),
   
   # title
-  titlePanel("Covid Vax"),
+  titlePanel("Country Level COVID-19 Vaccination Prioritisation Decision Support Tool for Europe and Central Asia"),
   
   strong("Authors"),
   p("Yang Liu, Frank Sandmann, Rosanna Barnard, Nicholas G Davies, Mark Jit"),
@@ -16,7 +16,7 @@ ui <- fluidPage(
              h5("To estimate the outbreak trajectories and health economic endpoints under different vaccination strategies in the WHO - Europe & Central Asia Region."),
              "</p>",
              strong("Key Assumptions"),
-             h5("- The natural progression of COVID-19 in this application is implemented using COVID-M, which accounts for pre-symptomatic and asymptomatic individuals, age-specific suspecibility and clinical progression rates, age-specific infection progression rates, and severity rates."),
+             h5("- The natural progression of COVID-19 in this application is implemented using COVID-M, which accounts for pre-symptomatic and asymptomatic individuals, seasonality, waning of infection-induced natural immunity, age-specific suspecibility and clinical progression rates, age-specific infection progression rates, and severity rates."),
              "</p>",
              h5("- Basic epidemic parameters are based on our best knowledge although could be changed if needed."),
              h5("- Current epidemic is fitted for the smoothed trends observed in COVID-19 deaths by country."),
@@ -26,7 +26,8 @@ ui <- fluidPage(
              "</p>",
              strong("Limitations"),
              h5("- Current vaccination under consideration assumes one-dose vaccination schedule. In otherwords, expected protection is achieved using only one dose. We hope to update the parameter sets as more information on immunogeneicity emerges."),
-             h5("- Current epidemic is fitted for the smoothed trends observed in COVID-19 deaths by country. With additional information such as changes in underascertainment rates or different public health endpoints such as daily number of hospitalisations, better estimatation regarding the current epidemics could be achieved.")
+             h5("- Current epidemic is fitted for the smoothed trends observed in COVID-19 deaths by country. With additional information such as changes in underascertainment rates or different public health endpoints such as daily number of hospitalisations, better estimatation regarding the current epidemics could be achieved."),
+             h5("- Uncertainty is not currently presented in this application.")
              
              ))),
     column(3,

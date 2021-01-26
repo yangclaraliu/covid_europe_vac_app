@@ -33,10 +33,7 @@ vac_policy <- function(para,
   #                   0.03,
   #                   0.2,
   #                   0.6)
-  # priority = c(NA, NA, NA, NA,
-  #              5,  5,  5,  5,
-  #              5,  5,  5,  5,
-  #              4,  3,  2,  1)
+  # priority = priority_policy[[3]]
   # cov_max = 0.7
   # #######
   

@@ -11,6 +11,25 @@ library(ggsflabel)
 library(mgcv)
 library(pspline)
 
+#
+scientific_10 <- function(x){
+  scales::scientific_format()(x) %>%
+    sub(pattern = "e\\+",
+        x = .,
+        replacement = "e") %>%
+    sub(pattern = "e00", 
+        x = ., 
+        replacement = "") %>%
+    gsub(pattern = "e",
+         replacement = " %*% 10^",
+         x = .) %>%
+    sub(pattern = "1 %*% ",
+        replacement = "",
+        x = ., fixed = T) %>%
+    parse(text = .)
+}
+
+
 # p_load(tidyverse, sf, countrycode, rnaturalearth, magrittr, data.table, ggsflabel,
 #        mgcv, pspline)
 # load data

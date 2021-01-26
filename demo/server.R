@@ -192,7 +192,8 @@ server <- function(input, output, session) {
       labs(title = "Vaccine Supply (Daily)",
            subtitle = "*based on input assumptions.",
            y = "# of Vaccines",
-           x = "Date") 
+           x = "Date") +
+      scale_y_continuous(labels = scientific_10)
   })
   
   #### renderplot for daily_vac by age ####
@@ -238,7 +239,7 @@ server <- function(input, output, session) {
            color = "Strategy",
            title = "Age Specific Vaccines Allocated") +
       ggsci::scale_color_futurama() +
-      scale_y_continuous(labels = scientific_format())
+      scale_y_continuous(labels = scientific_10)
   })
   
   
@@ -272,7 +273,7 @@ server <- function(input, output, session) {
                           labels = c("Daily Incidence",
                                      "Cumulative Incidence",
                                      "Daily Deaths",
-                                     "Cumullative Daily")),
+                                     "Cumulative Deaths")),
              policy = factor(policy,
                              levels = 0:4,
                              labels = c("V-","V+","V60","V20","V75"))) %>% 
@@ -299,39 +300,52 @@ server <- function(input, output, session) {
       labs(x = "Date",
            y = "",
            color = "Strategy",
-           title = "")
+           title = "",
+           caption = "Vertail dashed lines indicate the timing of vaccination programs, and 1, 4, and 7 months after.") +
+      geom_vline(data = dataInput()[["date_start_vac"]] %>% reshape2::melt(id = "id"),
+                 aes(xintercept = value),
+                 linetype = 2) +
+      scale_y_continuous(labels = scientific_10)
   })
   
   output$econ <- renderPlot({
-    # dataInput()[["econ"]]  %>% 
-    econ %>% 
+    dataInput()[["econ"]]  %>% 
+    # econ %>% 
       separate(variable, into = c("tag", "unit")) %>% 
       mutate(unit = if_else(is.na(unit), 
                             "Overall Loss", 
                             "Per-dose Loss Reduction")) %>%
+      filter(tag %in% c("adjLE", "VSLmlns", "QALYloss")) %>% 
       mutate(var = factor(tag,
-                          levels = c("LE", "adjLE", "adjQALEdisc",
-                                     "VSLmlns", "QALYcases", "QALYloss",
-                                     "doses"),
-                          labels = c("Life Expectancy",
+                          levels = c(# "LE", 
+                                     "adjLE", 
+                                     # "adjQALEdisc",
+                                     "VSLmlns", 
+                                     # "QALYcases", 
+                                     "QALYloss"# ,
+                                     # "doses"
+                                     ),
+                          labels = c(# "Life Expectancy",
                                      "Comorbidity-adjusted Life Expectancy",
-                                     "Quality-adjusted Life Expectancy",
+                                     # "Quality-adjusted Life Expectancy",
                                      "VSL (mln. USD)",
-                                     "Morbidity-related QALY",
-                                     "Total QALY (AEFI + morbidity + mortality)",
-                                     "Doses")),
+                                     # "Morbidity-related QALY",
+                                     "Total QALY (AEFI + morbidity + mortality)"# ,
+                                     # "Doses"
+                                     )),
              policy = parse_number(policy),
              policy = factor(policy,
                              levels = c(0:4),
                              labels = c("V-","V+","V60","V20","V75"))) %>% 
-      filter(var != "Doses") %>% 
-      ggplot(., aes(x = policy, 
+      # filter(var != "Doses") %>% 
+      ggplot(., aes(x = w, 
                     y = value,
                     color = policy,
                     fill = policy)) +
-      geom_bar(stat = "identity") +
+      geom_bar(stat = "identity",
+               position=position_dodge()) +
       # geom_point() +
-      facet_wrap(var~unit, scale =  "free") +
+      facet_wrap(unit~var, scale =  "free") +
       ggsci::scale_color_futurama() +
       ggsci::scale_fill_futurama() +
       theme_bw() +
@@ -339,11 +353,11 @@ server <- function(input, output, session) {
             legend.text = element_text(size = 20),
             title = element_text(size = 24),
             strip.text = element_text(size = 18),
-            legend.text = element_text(size = 18),
             axis.text = element_text(size = 18),
             axis.title = element_text(size = 18)) +
-      labs(color = "", x = "Strategy", fill = "", y = "")
-  })
+      labs(color = "", x = "", fill = "", y = "")+
+      scale_y_continuous(labels = scientific_10)
+   })
   #### loc_map ####
   output$loc_map = renderLeaflet({
     leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 

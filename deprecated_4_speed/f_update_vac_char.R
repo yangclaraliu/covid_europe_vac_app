@@ -11,7 +11,7 @@ update_vac_char <- function(para,
 
   # debug
   # para <- gen_country_basics("Belgium")
-  # ve_i <- 0.9 
+  # ve_i <- 0.9
   # ve_d <- 0.5
   # waning_vac = 52*7
 
