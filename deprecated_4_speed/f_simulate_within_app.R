@@ -26,14 +26,14 @@ predict_deriv <- function(
   # ms_cov <- c(0, 0.5, 0.6)  # milestones for coverage
   # date_start = "2020-02-15"       # starting date of uncontrollable community transmission
   # date_end = "2022-12-31"
-  # ve_i = 0.9
+  # ve_i = 0
   # ve_d = 0
   # wane = c(45, 1)
   # R = 2.7
   # pattern = "linear"
-  # type_ms = "Customised"
-  # 
-  
+  # type_ms = "Preload"
+  # #
+
   wb <- countrycode::countrycode(cn, "country.name", "wb")
   pattern <-   case_when(pattern_label == "Linear Increase" ~ "linear",
                          pattern_label == "Exponential Increase" ~ "exponential",

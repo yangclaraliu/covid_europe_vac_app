@@ -422,7 +422,7 @@ source("f_vac_policy_preload.R")
 # load all utility functions
 source("f_utils.R")
 # load healthcare system data
-source("d_healthcare_parameters.R")
+source("d_healthcare_parameters2.R")
 # generate health economics results
 source("f_gen_econ.R")
 
@@ -476,5 +476,7 @@ wp_reg = wp_reg[!is.na(lon) & !is.na(lat)] %>%
 
 # Restrict to regions with a lon and lat; this removes places with 0 population as well.
 
+rm("fit", "pre_tab","owid","val","p","tab","gm_forecast","gm_scaled","si_imputed","oxcgrt","to_merge","si","gm",
+   "schedule_pre")
 save.image("global.RData")
 save.image("../demo/global.RData")

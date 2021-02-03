@@ -151,7 +151,7 @@ server <- function(input, output, session) {
       # priority strategy selected
       date_start = input$date_start,
       ve_i = input$ve_i,
-      ve_d = input$ve_d,
+      ve_d = (input$Ts-input$ve_i)/(1-input$ve_i),
       # c(natural immunity duration, vaccine induced immunity duration)
       wane = c(input$waning_nat, input$waning_vac),
       # basic reproduction number 
@@ -163,6 +163,11 @@ server <- function(input, output, session) {
   # output$test <- renderPrint({
   #   input$date_start
   # })
+  
+  #### output messages 1 ####
+  output$message1 <- renderText(
+    paste0(round((input$Ts-input$ve_i)/(1-input$ve_i),2))
+  )
   
   #### supply plot ####
   output$supply <- renderPlot({
@@ -247,8 +252,8 @@ server <- function(input, output, session) {
   output$pho <- renderPlot({
     dataInput()[["main"]] %>% 
       # main %>% 
-      dplyr::select(date, policy, death_o, cases, supply) %>% 
-      pivot_longer(cols = c("death_o", "cases")) %>% 
+      dplyr::select(date, policy, death_o, cases, subclinical, supply) %>% 
+      pivot_longer(cols = c("death_o", "cases", "subclinical")) %>% 
       # filter(supply > 0) %>% 
       # mutate(value = if_else(is.na(value), 0, value)) %>% 
       # filter(compartment %in% c("death_o", "cases")) %>%
@@ -268,10 +273,14 @@ server <- function(input, output, session) {
              cat = factor(cat,
                           levels = c("cases-value",
                                      "cases-value_cum",
+                                     "subclinical-value",
+                                     "subclinical-value_cum",
                                      "death_o-value",
                                      "death_o-value_cum"),
                           labels = c("Daily Incidence",
                                      "Cumulative Incidence",
+                                     "Daily Subclinical",
+                                     "Cumulative Subclinical",
                                      "Daily Deaths",
                                      "Cumulative Deaths")),
              policy = factor(policy,

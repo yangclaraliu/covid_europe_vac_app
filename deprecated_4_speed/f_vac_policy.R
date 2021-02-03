@@ -17,7 +17,7 @@ vac_policy <- function(para,
                                     5,  5,  5,  5,
                                     5,  5,  5,  5,
                                     4,  3,  2,  1),
-                       date_start = date_start,
+                       # date_start = date_start,
                        cov_max = 0.7 # maximum coverage objective in each population
                        
 ){
@@ -37,6 +37,7 @@ vac_policy <- function(para,
   # cov_max = 0.7
   # #######
   
+  date_start = para$date0
   
   # error messages RE: parameters
   if((length(milestone_date)) != length(milestone_cov)) {
