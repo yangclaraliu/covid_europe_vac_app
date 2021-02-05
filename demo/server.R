@@ -7,7 +7,7 @@ server <- function(input, output, session) {
                 value = if_else(x == 1, 
                                 as.character(as.Date(Sys.time())),
                                 "2022-12-31"
-                                ), # as.character(as.Date(Sys.time())),
+                ), # as.character(as.Date(Sys.time())),
                 min = "2020-01-01",
                 max = "2022-12-31"
       )}
@@ -24,7 +24,7 @@ server <- function(input, output, session) {
                      TRUE ~ as.numeric(NA)
                    ),
                    min = 0, 
-                   max = 1, 
+                   max = if_else(x == 1, 0, 1), 
                    step = 0.01)
     })
   })
@@ -43,7 +43,10 @@ server <- function(input, output, session) {
                            "Sigmoid Increase"),
                selected = "Linear Increase"
              ),
-             helpText("Overall vaccine coverage is assumed to reach 50% on 2021-12-31. Additional revaccination programs are included to keep population level stablised at 50% level while accounting for waning immunity.")
+             helpText("Overall vaccine coverage is assumed to reach 50% on 
+                      2021-12-31. Additional revaccination programs are 
+                      included to keep population level stablised at 50% level
+                      while accounting for waning immunity.")
            ),
            "Customised" = list(numericInput(
              inputId = "n_ms",
@@ -53,17 +56,19 @@ server <- function(input, output, session) {
              step = 1,
              value = 2
            ),
+           p("*The first value of milestone coverage should always begin with 0, indicating 
+             the beginning of vaccination efforts."),
            # actionButton("refresh", "Update Milestones"),
            fluidRow(
              column(3,
                     h4("Vaccination Progress Milestones"),
                     uiOutput("ms_dates")
-                    ),
+             ),
              column(3,
                     h4("Vaccination Coverage Milestones"),
                     uiOutput("ms_covs"),
-                    br(),
-                    p("*Vaccination coverage will always start from 0.")
+                    br()
+                    
              )
            )
            ))
@@ -88,7 +93,14 @@ server <- function(input, output, session) {
                      shinyjs::toggle(id = "Epi", anim = T))
   })
   
-  # update map when a new location is chosen
+  # control panel for vaccine and vaccination related parameters
+  observe({
+    shinyjs::onclick("toggleVac",
+                     shinyjs::toggle(id = "Vac", anim = T))
+  })
+  
+  
+  ##### update map when a new location is chosen ####
   observe({
     # Choose location
     locations = input$cn
@@ -112,6 +124,21 @@ server <- function(input, output, session) {
               ((sum(locations != "0") - 1) * 1.5))
   })
   
+  #### update refresh button ####
+  observe({
+    if(input$Ts < input$ve_i){
+      shinyjs::disable("update")
+    } else {
+      shinyjs::enable("update")
+    }
+  })
+  #### warning messages ####
+  # observe({
+  #   if(input$type_ms == "Customised" & !is.null(output$ms_covs)  & output$ms_covs[1] > 0){
+  #     shinyjs::alert("Please provide the starting date for vacciantion efforts!")
+  #   }
+  # })
+  # # 
   
   # obtain all the results so don't need to refer to them individually each 
   # time.
@@ -127,27 +154,33 @@ server <- function(input, output, session) {
       ms_date = sapply(
         1:input$n_ms, 
         function(x){
-        req(input[[paste0("date", x)]]);
-        input[[paste0("date", x)]]
-        }),
-                # as.vector(input[[paste0("date", 1:input$n_ms)]]),
-                # input[startsWith("date", names(input))] %>% unlist,
-                # sort_input(input, "date"),
-                # c(input$date1, input$date2), 
-                # input$date3, input$date4, 
-                # input$date5),
+          req(input[[paste0("date", x)]]);
+          input[[paste0("date", x)]]
+        })%>% 
+        .[!is.na(.)] %>% 
+        as.numeric %>%
+        as.Date(., origin = "1970-01-01") %>% 
+        as.character(),
+      # as.vector(input[[paste0("date", 1:input$n_ms)]]),
+      # input[startsWith("date", names(input))] %>% unlist,
+      # sort_input(input, "date"),
+      # c(input$date1, input$date2), 
+      # input$date3, input$date4, 
+      # input$date5),
       ms_cov =  sapply(
         1:input$n_ms, 
         function(x){
-        req(input[[paste0("cov", x)]]);
-        input[[paste0("cov", x)]]
-        }),
-                #as.vector(input[[paste0("cov", 1:input$n_ms)]]),
-                # input[startsWith("cov", names(input))] %>% unlist,
-                # sort_input(input, "cov"),
-                # c(input$cov1, input$cov2),
-                # input$cov3, input$cov4,
-                # input$cov5),
+          req(input[[paste0("cov", x)]]);
+          input[[paste0("cov", x)]]
+        }) %>% 
+        .[!is.na(.)] %>% 
+        as.numeric,
+      #as.vector(input[[paste0("cov", 1:input$n_ms)]]),
+      # input[startsWith("cov", names(input))] %>% unlist,
+      # sort_input(input, "cov"),
+      # c(input$cov1, input$cov2),
+      # input$cov3, input$cov4,
+      # input$cov5),
       # priority strategy selected
       date_start = input$date_start,
       ve_i = input$ve_i,
@@ -159,20 +192,85 @@ server <- function(input, output, session) {
     )
   })
   
-  # 
-  # output$test <- renderPrint({
-  #   input$date_start
-  # })
-  
-  #### output messages 1 ####
+  #### output messages 1: Ts and ve_i ####
   output$message1 <- renderText(
-    paste0(round((input$Ts-input$ve_i)/(1-input$ve_i),2))
+    if(input$Ts >= input$ve_i){
+      paste0(
+        exp_ve(input$Ts, input$ve_i, 0.5)[[2]]
+        # round((input$Ts-input$ve_i)/(1-input$ve_i),2)
+        )
+    } else {
+      "[ERROR] Infection-blocking VE cannot be greater than VE against symptomatic infection."
+    }
   )
+  
+  epi_save <- reactive({
+    dataInput()[["main"]] %>% 
+      dplyr::select(date, policy, death_o, cases, subclinical, supply) %>% 
+      pivot_longer(cols = c("death_o", "cases", "subclinical")) %>% 
+      group_by(policy, name) %>% group_split() %>%
+      map(arrange, t) %>%
+      map(mutate, value_cum = cumsum(value)) %>%
+      bind_rows() %>% 
+      pivot_longer(cols = c(value, value_cum),
+                   names_to = "metric",
+                   values_to = "value") %>%
+      mutate(cat = paste(name, metric, sep = "-"),
+             cat = factor(cat,
+                          levels = c("cases-value",
+                                     "cases-value_cum",
+                                     "subclinical-value",
+                                     "subclinical-value_cum",
+                                     "death_o-value",
+                                     "death_o-value_cum"),
+                          labels = c("Daily Incidence",
+                                     "Cumulative Incidence",
+                                     "Daily Subclinical",
+                                     "Cumulative Subclinical",
+                                     "Daily Deaths",
+                                     "Cumulative Deaths")),
+             policy = factor(policy,
+                             levels = 0:4,
+                             labels = c("V-","V+","V60","V20","V75"))) %>% 
+      # mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
+      filter(date >= "2021-01-01")
+  })
+  
+  econ_save <- reactive({
+    dataInput()[["econ"]]  %>% 
+      # econ %>% 
+      separate(variable, into = c("tag", "unit")) %>% 
+      mutate(unit = if_else(is.na(unit), 
+                            "Overall Loss", 
+                            "Per-dose Loss Reduction")) %>%
+      filter(tag %in% c("adjLE", "VSLmlns", "QALYloss")) %>% 
+      mutate(var = factor(tag,
+                          levels = c(# "LE", 
+                            "adjLE", 
+                            # "adjQALEdisc",
+                            "VSLmlns", 
+                            # "QALYcases", 
+                            "QALYloss"# ,
+                            # "doses"
+                          ),
+                          labels = c(# "Life Expectancy",
+                            "Comorbidity-adjusted Life Expectancy",
+                            # "Quality-adjusted Life Expectancy",
+                            "VSL (mln. USD)",
+                            # "Morbidity-related QALY",
+                            "Total QALY (AEFI + morbidity + mortality)"# ,
+                            # "Doses"
+                          )),
+             policy = parse_number(policy),
+             policy = factor(policy,
+                             levels = c(0:4),
+                             labels = c("V-","V+","V60","V20","V75"))) 
+  })
   
   #### supply plot ####
   output$supply <- renderPlot({
-   dataInput()[["main"]]%>% 
-   # main %>%
+    dataInput()[["main"]]%>% 
+      # main %>%
       dplyr::filter(policy == 1) %>% 
       dplyr::select(date, doses_daily, supply) %>%
       pivot_longer(cols = c(doses_daily, supply)) %>% 
@@ -204,7 +302,7 @@ server <- function(input, output, session) {
   #### renderplot for daily_vac by age ####
   output$daily_vac <- renderPlot({
     dataInput()[["main"]] %>% 
-    # main %>%   
+      # main %>%   
       dplyr::select(date, policy, starts_with("Y", ignore.case = F)) %>% 
       replace(., is.na(.), 0) %>% 
       group_by(policy) %>% group_split() %>% map(arrange, date) %>% 
@@ -214,7 +312,7 @@ server <- function(input, output, session) {
       pivot_longer(cols = starts_with("Y")) %>% 
       left_join(data.frame(name = paste0("Y",1:16),
                            pop = dataInput()[["size"]]),
-                           # pop = r[["size"]]),
+                # pop = r[["size"]]),
                 by = "name") %>%
       mutate(name = factor(name,
                            levels = paste0("Y",1:16),
@@ -250,44 +348,7 @@ server <- function(input, output, session) {
   
   #### renderPlot for Public Health Outcomes ####
   output$pho <- renderPlot({
-    dataInput()[["main"]] %>% 
-      # main %>% 
-      dplyr::select(date, policy, death_o, cases, subclinical, supply) %>% 
-      pivot_longer(cols = c("death_o", "cases", "subclinical")) %>% 
-      # filter(supply > 0) %>% 
-      # mutate(value = if_else(is.na(value), 0, value)) %>% 
-      # filter(compartment %in% c("death_o", "cases")) %>%
-      # pivot_longer(starts_with("value")) %>% 
-      # mutate(policy = if_else(name == "value.y", "0", policy)) %>%
-      # distinct %>% dplyr::select(-name) %>% 
-      # group_by(policy, t, compartment, run, population) %>% 
-      # summarise(value = sum(value), .groups = "drop") %>% 
-      group_by(policy, name) %>% group_split() %>%
-      map(arrange, t) %>%
-      map(mutate, value_cum = cumsum(value)) %>%
-      bind_rows() %>% 
-      pivot_longer(cols = c(value, value_cum),
-                   names_to = "metric",
-                   values_to = "value") %>%
-      mutate(cat = paste(name, metric, sep = "-"),
-             cat = factor(cat,
-                          levels = c("cases-value",
-                                     "cases-value_cum",
-                                     "subclinical-value",
-                                     "subclinical-value_cum",
-                                     "death_o-value",
-                                     "death_o-value_cum"),
-                          labels = c("Daily Incidence",
-                                     "Cumulative Incidence",
-                                     "Daily Subclinical",
-                                     "Cumulative Subclinical",
-                                     "Daily Deaths",
-                                     "Cumulative Deaths")),
-             policy = factor(policy,
-                             levels = 0:4,
-                             labels = c("V-","V+","V60","V20","V75"))) %>% 
-      # mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
-      filter(date >= "2021-01-01") %>% 
+   epi_save() %>% 
       ggplot(., aes(x = date,
                     y = value,
                     group = policy,
@@ -318,34 +379,7 @@ server <- function(input, output, session) {
   })
   
   output$econ <- renderPlot({
-    dataInput()[["econ"]]  %>% 
-    # econ %>% 
-      separate(variable, into = c("tag", "unit")) %>% 
-      mutate(unit = if_else(is.na(unit), 
-                            "Overall Loss", 
-                            "Per-dose Loss Reduction")) %>%
-      filter(tag %in% c("adjLE", "VSLmlns", "QALYloss")) %>% 
-      mutate(var = factor(tag,
-                          levels = c(# "LE", 
-                                     "adjLE", 
-                                     # "adjQALEdisc",
-                                     "VSLmlns", 
-                                     # "QALYcases", 
-                                     "QALYloss"# ,
-                                     # "doses"
-                                     ),
-                          labels = c(# "Life Expectancy",
-                                     "Comorbidity-adjusted Life Expectancy",
-                                     # "Quality-adjusted Life Expectancy",
-                                     "VSL (mln. USD)",
-                                     # "Morbidity-related QALY",
-                                     "Total QALY (AEFI + morbidity + mortality)"# ,
-                                     # "Doses"
-                                     )),
-             policy = parse_number(policy),
-             policy = factor(policy,
-                             levels = c(0:4),
-                             labels = c("V-","V+","V60","V20","V75"))) %>% 
+  econ_save() %>% 
       # filter(var != "Doses") %>% 
       ggplot(., aes(x = w, 
                     y = value,
@@ -366,10 +400,22 @@ server <- function(input, output, session) {
             axis.title = element_text(size = 18)) +
       labs(color = "", x = "", fill = "", y = "")+
       scale_y_continuous(labels = scientific_10)
-   })
+  })
   #### loc_map ####
   output$loc_map = renderLeaflet({
     leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
       addProviderTiles(providers$Stamen.TonerLite)
   })
+  
+  #### output for download epi ####
+  output$dl_epi <- downloadHandler(
+    filename = function() {paste0(input$cn, "_epi_", Sys.Date() ,".csv") },
+    content = function(file) { write_csv(epi_save(), file) }
+  )
+  
+  #### output for download 2 ####
+  output$dl_he <- downloadHandler(
+    filename = function() {paste0(input$cn, "_he_", Sys.Date(), ".csv") },
+    content = function(file) {write_csv(econ_save(), file, row.names = F) }
+  )
 }

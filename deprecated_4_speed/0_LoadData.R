@@ -474,6 +474,17 @@ wp_reg = wp_reg[!is.na(lon) & !is.na(lat)] %>%
   filter(id %in% members$wb)
 
 
+# function for getting ve against asymptomatic infections
+exp_ve <- function(ve, ei_v, y){
+  
+  ed_vi <- (ve - ei_v)/(1 - ei_v)
+  p_asym <- (1-ei_v)*(1-ed_vi)*(1-y) + (1-ei_v)*ed_vi
+  vea <- 1 - p_asym/(1-y)
+  r <- list(ed_vi = ed_vi, vea = vea)
+  return(r)
+  
+}
+
 # Restrict to regions with a lon and lat; this removes places with 0 population as well.
 
 rm("fit", "pre_tab","owid","val","p","tab","gm_forecast","gm_scaled","si_imputed","oxcgrt","to_merge","si","gm",

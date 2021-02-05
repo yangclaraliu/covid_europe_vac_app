@@ -62,21 +62,10 @@ predict_deriv <- function(
                     ve_d = ve_d)  -> params_baseline
   
   if(type_ms == "Customised"){
-    ms_date <- ms_date %>% 
-      .[!is.na(.)] %>% 
-      as.numeric %>%
-      as.Date(., origin = "1970-01-01") %>% 
-      as.character()
-    
-    ms_cov <- ms_cov %>% 
-      .[!is.na(.)] %>% 
-      as.numeric 
-    
     priority_policy %>% 
       map(~vac_policy(para = params_baseline,
                       milestone_date = ms_date,
                       milestone_cov = ms_cov,
-                      date_start = date_start,
                       priority = .,
                       cov_max = cov_tar)) -> params
   }

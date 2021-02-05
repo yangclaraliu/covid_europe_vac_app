@@ -382,6 +382,7 @@ summary {
 <ul>
 <li><code>toggleEpi</code>: controlling the appearance of epi parameters</li>
 <li><code>update</code>: updating all the results panels</li>
+<li><code>refresh</code>: updating milestone slots</li>
 </ul>
 </div>
 <div id="input" class="section level2">
@@ -394,19 +395,21 @@ summary {
 <li><code>ms_covs</code>: technically an output object, UI object to be rendered to obtain milestone coverage goals dynamically</li>
 <li><code>ms_dates</code>: technically an output object, UI object to be rendered to obtain milestone dates dynamically</li>
 <li><code>n_ms</code>: number of milestones</li>
-<li><code>waning_nat</code>: waning of infection induced natural immunity</li>
-<li><code>waning_vac</code>: waning of vaccine induced immunity</li>
+<li><code>panel_ms</code>: panels of milestones, either preloaded or customised, entered by individual user</li>
+<li><code>waning_nat</code>: waning of infection induced natural immunity (weeks)</li>
+<li><code>waning_vac</code>: waning of vaccine induced immunity (years)</li>
 <li><code>rn</code>: basic reproduction number</li>
+<li><code>type_ms</code>: type of milestones, pre-loaded sets of milestones (i.e., “Preload”) or customized, entered by individual user (i.e., “Customised”)</li>
 <li><code>ve</code>: vaccine efficacy</li>
 </ul>
 </div>
 <div id="output" class="section level2">
 <h2>Output</h2>
 <ul>
-<li><code>supply</code>: overall vaccine supply</li>
 <li><code>daily_vac</code>: daily vaccination progress by age</li>
-<li><code>pho</code>: public health outcomes</li>
 <li><code>econ</code>: health economic outcomes (for different vaccination strategies)</li>
+<li><code>pho</code>: public health outcomes</li>
+<li><code>supply</code>: overall vaccine supply</li>
 </ul>
 </div>
 </div>
