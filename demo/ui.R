@@ -88,23 +88,23 @@ ui <- fluidPage(
                #### Input = rn #### 
                numericInput("rn", 
                             "Basic Reproduction Number", 
-                            value = 2.7, 
-                            min = 1, max = 3, step = 0.1),
+                            value = 2, 
+                            min = 1, max = 5, step = 0.1),
                #### Input = waning_nat #### 
-               numericInput("waning_nat", 
-                            "Waning of Natural Immunity (Weeks)", 
-                            value = 45, 
-                            min = 20, max = 104, step = 1),
+               # numericInput("waning_nat", 
+               #              "Waning of Natural Immunity (Weeks)", 
+               #              value = 45, 
+               #              min = 20, max = 104, step = 1),
                #### Input = date_start ####
                dateInput("date_start",
-                         "Simulation Start Date",
-                         value = "2020-02-05"), #
+                         "Infection Introduction Date",
+                         value = as.character(lubridate::ymd("2019-12-01") + 54))#,#
                #### Input = date_end ####
-               dateInput("date_end",
-                         "Simulation End Date",
-                         value = "2022-12-31",
-                         min = "2022-12-31",
-                         max = "2022-12-31")
+               # dateInput("date_end",
+               #           "Simulation End Date",
+               #           value = "2022-12-31",
+               #           min = "2022-12-31",
+               #           max = "2022-12-31")
              )
            ),
            
@@ -212,6 +212,10 @@ ui <- fluidPage(
     tabPanel(
       title = "Health Economics Outcomes",
       plotOutput('econ', height = 1000)
+    ),
+    tabPanel(
+      title = "Model Fit & Effective R",
+      imageOutput("epi_fit")
     )
   )
 )

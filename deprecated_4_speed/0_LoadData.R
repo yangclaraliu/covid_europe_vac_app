@@ -403,13 +403,14 @@ df_VSL <- rbind(df_VSL,
   mutate(wb = countrycode(country_name, "country.name", "wb"))
 
 # model selected for first derivative fitting
-model_selected <- read_rds("fit_derivative.rds") %>% 
-  compact %>%
-  map(mutate, tmp = min(S_A )) %>% 
-  map(filter, tmp == S_A) %>% 
-  bind_rows() %>% 
-  dplyr::select(-tmp) %>% 
-  mutate(WB = countrycode::countrycode(cn, "country.name","wb"))
+model_selected <- read_csv("gs_fitted_imputed.csv")
+# model_selected <- read_rds("fit_derivative.rds") %>% 
+#   compact %>%
+#   map(mutate, tmp = min(S_A )) %>% 
+#   map(filter, tmp == S_A) %>% 
+#   bind_rows() %>% 
+#   dplyr::select(-tmp) %>% 
+#   mutate(WB = countrycode::countrycode(cn, "country.name","wb"))
 
 # function for generating baseline parameter ombinations
 source("f_gen_country_basics.R")

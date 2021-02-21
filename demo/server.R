@@ -78,13 +78,10 @@ server <- function(input, output, session) {
     cn_label <- countrycode::countrycode(input$cn, "country.name", "wb")
     updateDateInput(session,
                     inputId = "date_start",
-                    value = model_selected[model_selected$WB == cn_label,
-                                           "start_date"]  %>% 
-                      unlist %>% 
-                      min %>% 
-                      as.numeric %>% 
-                      as.Date(., origin = "1970-01-01") %>% 
-                      as.character) 
+                    value = as.character(model_selected[model_selected$wb == cn_label,]$t_intro  + lubridate::ymd("2019-12-01")))
+    updateNumericInput(session,
+                    inputId = "rn",
+                    value = model_selected[model_selected$wb == cn_label,]$R0)
   })
   
   # control panel for epidemic parameters
@@ -186,7 +183,8 @@ server <- function(input, output, session) {
       ve_i = input$ve_i,
       ve_d = (input$Ts-input$ve_i)/(1-input$ve_i),
       # c(natural immunity duration, vaccine induced immunity duration)
-      wane = c(input$waning_nat, input$waning_vac),
+      wane = c(45, # input$waning_nat, 
+               input$waning_vac),
       # basic reproduction number 
       R = input$rn
     )
@@ -233,7 +231,7 @@ server <- function(input, output, session) {
                              levels = 0:4,
                              labels = c("V-","V+","V60","V20","V75"))) %>% 
       # mutate(date = lubridate::ymd(dataInput()[["date_start"]]) + t) %>% 
-      filter(date >= "2021-01-01")
+      dplyr::filter(date >= "2021-01-01")
   })
   
   econ_save <- reactive({
@@ -401,6 +399,16 @@ server <- function(input, output, session) {
       labs(color = "", x = "", fill = "", y = "")+
       scale_y_continuous(labels = scientific_10)
   })
+  
+  output$epi_fit <- renderImage({
+    return(list(
+           src = paste0("images_fit/",input$cn,".png"),
+           contentType = "image/png",
+           width = "50%"
+           ))
+  }, deleteFile = F)
+
+  
   #### loc_map ####
   output$loc_map = renderLeaflet({
     leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 

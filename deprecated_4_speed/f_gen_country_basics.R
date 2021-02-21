@@ -9,7 +9,7 @@ gen_country_basics <- function(country,
                                R0_assumed  = 2.7,
                                date_start = "2020-01-01",
                                date_end = "2022-12-31",
-                               s_A = 0.1,
+                               # s_A = 0.1,
                                deterministic = TRUE){
   
   wb_tmp = countrycode(country, "country.name", "wb")
@@ -48,21 +48,22 @@ gen_country_basics <- function(country,
     para$pop[[i]]$dist_seed_ages = cm_age_coefficients(20, 50, 5 * (0:length(para$pop[[i]]$size))) # infections start in individuals aged 20-50
     
     # 5 new infections each day for 7 days every month
-    para$pop[[i]]$seed_times = sapply(30*0:(4* as.numeric(gsub("-.*$", "", para$time1)) - 
-                                              as.numeric(gsub("-.*$", "", para$date0))),
-                                      function(x) x+rep(0:6, each = 5)) %>% as.vector 
+    # para$pop[[i]]$seed_times = sapply(30*0:(4* as.numeric(gsub("-.*$", "", para$time1)) - 
+    #                                           as.numeric(gsub("-.*$", "", para$date0))),
+    #                                   function(x) x+rep(0:6, each = 5)) %>% as.vector 
+    para$pop[[i]]$seed_times <- c(1:14)
   }
   
   para$processes = burden_processes
   
-  para$schedule[["seasonality"]] <- list(
-    parameter = "season_A",
-    pops = 0,
-    mode = "assign",
-    values = list(s_A),
-    times = as.numeric(lubridate::ymd("2020-09-30") - 
-                         lubridate::ymd(date_start))
-  )
+  # para$schedule[["seasonality"]] <- list(
+  #   parameter = "season_A",
+  #   pops = 0,
+  #   mode = "assign",
+  #   values = list(s_A),
+  #   times = as.numeric(lubridate::ymd("2020-09-30") - 
+  #                        lubridate::ymd(date_start))
+  # )
   
   para$schedule[["mobility"]] = list(
     parameter = "contact",

@@ -18,7 +18,6 @@ predict_deriv <- function(
   
   # # debugging
   # cn = "Albania"                  # country name
-  # S_A = 0.2                       # size of seasonal component
   # cov_tar = 0.8                   # target coverage
   # ms_date <- c("2021-03-01",
   #              "2021-06-30",
@@ -38,23 +37,23 @@ predict_deriv <- function(
   pattern <-   case_when(pattern_label == "Linear Increase" ~ "linear",
                          pattern_label == "Exponential Increase" ~ "exponential",
                          pattern_label == "Sigmoid Increase" ~ "sigmoid")
-  S_A <- model_selected %>% filter(WB == wb) %>% pull(S_A)
+  # S_A <- model_selected %>% filter(WB == wb) %>% pull(S_A)
   # debugging version
   # date_start <- model_selected %>% filter(WB == wb) %>% pull(start_date) %>% as.Date
   # model version
-  date_start <- date_start %>% 
-    as.numeric %>%
-    as.Date(., origin = "1970-01-01") %>% 
-    as.character()
+  # date_start <- date_start %>% 
+  #   as.numeric %>%
+  #   as.Date(., origin = "1970-01-01") %>% 
+  #   as.character()
   
   gen_country_basics(country = cn,
                      waning_nat = wane[1]*7,
                      R0_assumed  = R ,
                      # infection introduction date
-                     date_start = date_start ,
+                     date_start = date_start,
                      date_end = date_end,
                      # size of seasonal component
-                     s_A = S_A,
+                     # s_A = S_A,
                      deterministic = TRUE) %>% 
     update_vac_char(para = .,
                     waning_vac = wane[2]*365,
